@@ -42,22 +42,20 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- **All credentials are provisioned; production 500 under diagnosis.** Done: Supabase project +
-  8 migrations + flags seeded; GitHub repo + all 5 Actions secrets; Firebase fully provisioned and
-  verified (`dubsmash-game`, Email/Password + Google enabled, service account works); all env vars
-  on Vercel including SUPABASE_SERVICE_ROLE_KEY, CLOUDINARY_API_SECRET, FIREBASE_*.
-  Deployment `dpl_9LYbgZT7rR3RLasCg7nkfP66BiFh` (commit b45dc4d) is READY but **API routes return
-  HTML 500**: /api/clips/playable, /api/auth/signup (GET should 405 → 500), /api/notifications.
-  Routes WITHOUT firebase-admin imports work fine (webhooks/ffmpeg-complete + auth/refresh-token
-  return proper 405 JSON). Landing page also returns a Next.js 500 page.
-  **Hypothesis: firebase-admin fails at module load** (module-load crash → HTML 500, while
-  in-handler errors return JSON 500). Local dev (Node 22) returns correct 401.
-  Vercel project runs Node 24.x — possible runtime incompatibility.
-  **Next step:** `pages/api/_diag.ts` was added (commit 162ed82, pushed) to dynamically import
-  firebase-admin and report the real error — deploy it and GET /api/_diag to see the error.
-  Vercel MCP kept dropping connections at this point; if still down, ask the user to redeploy
-  from the Vercel dashboard (Deployments → Redeploy latest commit 162ed82).
-  After diagnosis, REMOVE pages/api/_diag.ts.
+- **Production is live and verified end-to-end.** The 500s were caused by `jose@6` (pulled by
+  `jwks-rsa@4` ← firebase-admin): it is ESM-only and Vercel's serverless loader cannot `require()`
+  ESM, so every route importing firebase-admin crashed at module load (HTML 500; in-handler errors
+  return JSON). Fixed by an npm `overrides` pin to `jose@5` (CJS build; jwks-rsa only uses
+  importJWK/exportSPKI/decodeJwt/decodeProtectedHeader). Vercel project nodeVersion set to 22.x.
+  Verified live: landing 200; authed routes 401 JSON; `POST /api/auth/signup` created the first
+  user as `super_admin` (`is_first_user: true`, flags served from Supabase); `GET /api/auth/me`
+  OK. The test user was deleted from Firebase + Supabase afterwards, so the next signup becomes
+  super_admin. The temporary `pages/api/_diag.ts` diagnostic was removed.
+- Vercel MCP intermittently drops its connection ("Failed to connect"). `create_deployment` needs
+  args wrapped in `requestBody`; `update_project` likewise. Runtime logs/errors tools return 403
+  for this personal-scope project — debug via a temporary diagnostic endpoint instead.
+- Still outstanding for full product verification: real clip upload → game session → FFmpeg
+  render through GitHub Actions (needs an actual video file + a game played through).
 - Vercel project is NOT git-linked, so pushes do not auto-deploy — link GitHub in Vercel project
   settings, or redeploy via `create_deployment` MCP each push.
 - SendGrid: SendGrid domain-authentication DNS records (CNAME/TXT for *.dubsmash.vercel.app)
