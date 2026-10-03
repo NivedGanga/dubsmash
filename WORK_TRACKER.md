@@ -29,9 +29,9 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 4 | Auth + admin access control (APIs, middleware, dashboard) | DONE |
 | 5 | Admin clip management + timeline editor | DONE (incl. jsdom pointer-drag tests) |
 | 6 | Game sessions + lobby | DONE (APIs + lobby + game page; `/play/[sessionId]` page is built in Phase 7) |
-| 7 | Recording system | IN PROGRESS — server side DONE (`lib/server/recordings.ts`, `pages/api/recordings/*`, recording-start/submit); client TODO: `lib/audio.ts`, `RecordingScreen`, `pages/play/[sessionId].tsx` |
+| 7 | Recording system | DONE (`lib/audio.ts`, `RecordingScreen`, `pages/play/[sessionId].tsx`) |
 | 8 | Video processing pipeline (FFmpeg + GitHub Actions) | TODO |
-| 9 | 3D avatars, playback stage, results | TODO |
+| 9 | 3D avatars, playback stage, results | DONE (AvatarDisplay, PlaybackStage, ResultsScreen, VideoProcessing, synced `playback:start`) |
 | 10 | Notifications, friends, profile, settings, feature-flags UI | TODO |
 | 11 | Deployment config + README/DEVELOPMENT docs | TODO |
 | 12 | Tests, typecheck, lint, build verification | TODO |
@@ -47,8 +47,6 @@ _(Write here what is half-done in the current phase, so the next person can pick
 - Friends API (`pages/api/friends/*`, `lib/server/friends.ts`, `hooks/useFriends.ts`) was also built
   early (Phase 6 needs it for invitations). Phase 10 still needs: `/friends` page, profile, settings,
   feature-flags admin page + API.
-- 3D avatars (`lib/three.ts`, `components/Game/AvatarDisplay.tsx`) were built early for the lobby.
-  Phase 9 still needs: PlaybackStage, ResultsScreen, VideoProcessing components.
 - TODO Phase 12: unit tests for `lib/server/gameFlow.ts` state machine with a fake Supabase client.
 - `/tmp/pgcheck/check.mjs` was used to validate migrations; to be moved into the repo as
   `scripts/validate-migrations.mjs` in Phase 12.
@@ -123,6 +121,13 @@ _(Append-only. Each decision: what, why.)_
 24. **3D avatars are procedural** (Three.js primitives, shared geometries/materials) rather than GLB
     files: zero download size and no binary assets to author. Models: casual_m, formal_m, casual_f,
     formal_f, robot*, blob* (*premium, gated by `premium_avatars` flag). Three.js is lazy-loaded.
+25. **Takes are recorded as Opus/WebM (or AAC/MP4 on Safari), not MP3.** Browsers cannot encode MP3
+    natively; Opus is better quality per bit. Bitrate adapts to the connection (48/64/128 kbps).
+    Recording auto-stops at line length + 0.75s; a muted video plays as a timing guide.
+26. **Playback is mixed live in the browser** (Web Audio, sample-accurate scheduling, peak-normalised)
+    so players watch immediately; the FFmpeg MP4 renders in the background for download/share.
+    Host can trigger synchronised playback for all (`POST /api/sessions/:id/playback` -> `playback:start`
+    with a wall-clock start time 2s ahead).
 16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
     the client/server boundary is enforced by ESLint instead.
 
