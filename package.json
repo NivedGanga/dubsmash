@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=18.18"
   },
+  "overrides": {
+    "jose": "^5.10.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
