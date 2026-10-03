@@ -48,16 +48,18 @@ _(Write here what is half-done in the current phase, so the next person can pick
   https://dubsmash.vercel.app (pages render; APIs 500 until Firebase + service-role envs are set).
   Vercel project is NOT git-linked (MCP couldn't reach the personal scope with teamId), so pushes do
   not auto-deploy — link GitHub in Vercel project settings, or redeploy via `create_deployment`.
-  Still needed from the user:
-  1. Firebase MCP login (auth code), then create Firebase project + web app + Google provider.
+  Firebase is provisioned: project `dubsmash-game` (id), web app `1:157762387371:web:0c6af74aa1ec885896a6ee`,
+  client SDK config written to `.env` and Vercel env vars. GitHub Actions secrets SUPABASE_URL /
+  CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY are set. Still needed from the user:
+  1. Enable sign-in providers in the Firebase console (no free-tier API path exists):
+     console.firebase.google.com/project/dubsmash-game/authentication → Get started →
+     Email/Password → Enable, then Add provider → Google → Enable.
   2. `SUPABASE_SERVICE_ROLE_KEY` — Supabase dashboard → Settings → API Keys (legacy service_role
      JWT, or a new `sb_secret_` key). Not retrievable via MCP.
   3. `CLOUDINARY_API_SECRET` — Cloudinary console → Settings → API keys. Not retrievable via API.
   4. Firebase Admin service account JSON (project settings → service accounts → generate key) for
-     `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`.
-  5. Then: set those into `.env` and Vercel env vars, set GitHub secrets
-     (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
-     `CLOUDINARY_API_SECRET`) so `process-videos.yml` can run, redeploy, run HANDOFF.md checklist.
+     `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` (share the downloaded file path).
+  5. Then: set those into `.env`, Vercel env vars and GitHub secrets, redeploy, run HANDOFF.md checklist.
 - `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
 
 ## Live infrastructure
@@ -68,7 +70,7 @@ _(Write here what is half-done in the current phase, so the next person can pick
 | GitHub | Public repo | https://github.com/NivedGanga/dubsmash |
 | Vercel | Project (framework: nextjs, region iad1) | `prj_QqBCF5jU6048RR47sod9GukVpDNB`, https://dubsmash.vercel.app |
 | Cloudinary | Existing free-plan env (user's account) | cloud name `dlba8afnl`, API key `332968182961976` |
-| Firebase | Pending user login via MCP | — |
+| Firebase | Project `dubsmash-game` + web app created; providers pending | project number 157762387371 |
 | SendGrid | Not provisioned (optional; no MCP) | — |
 
 DB state: migrations 001–008 applied via Supabase MCP `apply_migration`; 7 feature flags seeded.
