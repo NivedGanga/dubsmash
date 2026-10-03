@@ -1,0 +1,53 @@
+name: Process videos
+
+# Renders queued dubbed videos with FFmpeg (scripts/process-videos.ts).
+# Free tier: ~2000 min/month. Each run with no jobs takes well under a minute.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      max_jobs:
+        description: 'Maximum jobs to process in this run'
+        required: false
+        default: '3'
+
+# Never run two workers at once (jobs are claimed atomically anyway, this just saves minutes).
+concurrency:
+  group: process-videos
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -1
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Process pending videos
+        run: npm run process-videos
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          CLOUDINARY_ROOT_FOLDER: ${{ vars.CLOUDINARY_ROOT_FOLDER || 'dubsmash' }}
+          MAX_JOBS_PER_RUN: ${{ github.event.inputs.max_jobs || '3' }}

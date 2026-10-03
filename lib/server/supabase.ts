@@ -9,8 +9,10 @@ let admin: SupabaseClient | null = null;
  */
 export function supabaseAdmin(): SupabaseClient {
   if (!admin) {
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!url) throw new Error('Missing required environment variable SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL). See .env.example.');
     admin = createClient(
-      process.env.SUPABASE_URL || requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      url,
       requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
