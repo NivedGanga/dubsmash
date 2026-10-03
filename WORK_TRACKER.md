@@ -28,8 +28,8 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | DONE (31 unit tests) |
 | 4 | Auth + admin access control (APIs, middleware, dashboard) | DONE |
 | 5 | Admin clip management + timeline editor | DONE (incl. jsdom pointer-drag tests) |
-| 6 | Game sessions + lobby | TODO |
-| 7 | Recording system | TODO |
+| 6 | Game sessions + lobby | DONE (APIs + lobby + game page; `/play/[sessionId]` page is built in Phase 7) |
+| 7 | Recording system | IN PROGRESS — server side DONE (`lib/server/recordings.ts`, `pages/api/recordings/*`, recording-start/submit); client TODO: `lib/audio.ts`, `RecordingScreen`, `pages/play/[sessionId].tsx` |
 | 8 | Video processing pipeline (FFmpeg + GitHub Actions) | TODO |
 | 9 | 3D avatars, playback stage, results | TODO |
 | 10 | Notifications, friends, profile, settings, feature-flags UI | TODO |
@@ -43,7 +43,13 @@ _(Write here what is half-done in the current phase, so the next person can pick
 
 - Phase 10 partially done early (needed by the navbar): notifications API (`pages/api/notifications/*`),
   `hooks/useNotifications.ts`, `components/Common/NotificationBell.tsx`. The bell already calls
-  `/api/friends/requests/{id}/accept|reject` — those endpoints are built in Phase 10.
+  `/api/friends/requests/{id}/accept|reject`.
+- Friends API (`pages/api/friends/*`, `lib/server/friends.ts`, `hooks/useFriends.ts`) was also built
+  early (Phase 6 needs it for invitations). Phase 10 still needs: `/friends` page, profile, settings,
+  feature-flags admin page + API.
+- 3D avatars (`lib/three.ts`, `components/Game/AvatarDisplay.tsx`) were built early for the lobby.
+  Phase 9 still needs: PlaybackStage, ResultsScreen, VideoProcessing components.
+- TODO Phase 12: unit tests for `lib/server/gameFlow.ts` state machine with a fake Supabase client.
 - `/tmp/pgcheck/check.mjs` was used to validate migrations; to be moved into the repo as
   `scripts/validate-migrations.mjs` in Phase 12.
 
@@ -106,6 +112,17 @@ _(Append-only. Each decision: what, why.)_
 21. **Playable clips endpoint** is separate (`/api/clips/playable`, any signed-in user, active +
     configured only, no timeline/dialogue exposed). `/api/clips` is the admin library.
 22. **Max clip length 15 min, 500MB**; uploads > 20MB are sent in 20MB chunks with retry (`lib/upload.ts`).
+23. **Session flow** (`lib/server/gameFlow.ts`): lobby -> recording -> playback -> completed (or cancelled).
+    Only invited friends can join (max 4). Characters are auto-dealt round-robin on join (solo player
+    voices everyone); the host can re-assign. Any line-up change resets everyone's ready flag. Host is
+    implicitly ready; Start requires all *other* players ready. Lines are recorded in timeline order;
+    the owner of `current_sequence_index` records, re-records freely (`/api/recordings/upload` replaces
+    the take), then `recording-submit` advances the turn. The last submit moves to `playback`, queues
+    the render job and returns 202. Host leaving cancels the game; another player leaving mid-game hands
+    their lines to the host.
+24. **3D avatars are procedural** (Three.js primitives, shared geometries/materials) rather than GLB
+    files: zero download size and no binary assets to author. Models: casual_m, formal_m, casual_f,
+    formal_f, robot*, blob* (*premium, gated by `premium_avatars` flag). Three.js is lazy-loaded.
 16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
     the client/server boundary is enforced by ESLint instead.
 

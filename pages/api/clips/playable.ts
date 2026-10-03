@@ -1,16 +1,10 @@
 import { z } from 'zod';
-import type { ClipRow } from '@/types/database';
-import type { Paginated } from '@/types/api';
+import type { Paginated, PlayableClip } from '@/types/api';
 import { createHandler, parseQuery } from '@/lib/server/handler';
 import { requireAuth } from '@/lib/middleware/requireAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { normaliseClip } from '@/lib/server/clips';
 import { pageRange, paginationSchema } from '@/lib/server/validation';
-
-export type PlayableClip = Pick<
-  ClipRow,
-  'id' | 'title' | 'description' | 'thumbnail_url' | 'duration_seconds' | 'trim_start' | 'trim_end' | 'difficulty' | 'character_count' | 'characters' | 'times_played'
->;
 
 const schema = paginationSchema.extend({
   q: z.string().trim().max(100).optional(),

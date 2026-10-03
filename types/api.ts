@@ -68,6 +68,12 @@ export interface ClipWithOwner extends ClipRow {
 
 export interface ClipListResponse extends Paginated<ClipWithOwner> {}
 
+/** Player-facing clip summary (no timeline/dialogue). */
+export type PlayableClip = Pick<
+  ClipRow,
+  'id' | 'title' | 'description' | 'thumbnail_url' | 'duration_seconds' | 'trim_start' | 'trim_end' | 'difficulty' | 'character_count' | 'characters' | 'times_played'
+>;
+
 export interface ClipSequencesResponse {
   clip_id: string;
   sequences: Sequence[];
