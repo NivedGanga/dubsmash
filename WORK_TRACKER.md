@@ -26,7 +26,7 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 1 | Project init: package.json, Next/TS/Tailwind config, types | DONE |
 | 2 | DB migrations (11 tables) + seed flags | DONE (validated on PGlite/Postgres 17: apply, idempotent re-run, triggers, RPCs) |
 | 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | DONE (31 unit tests) |
-| 4 | Auth + admin access control (APIs, middleware, dashboard) | TODO |
+| 4 | Auth + admin access control (APIs, middleware, dashboard) | DONE |
 | 5 | Admin clip management + timeline editor | TODO |
 | 6 | Game sessions + lobby | TODO |
 | 7 | Recording system | TODO |
@@ -41,7 +41,11 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- none
+- Phase 10 partially done early (needed by the navbar): notifications API (`pages/api/notifications/*`),
+  `hooks/useNotifications.ts`, `components/Common/NotificationBell.tsx`. The bell already calls
+  `/api/friends/requests/{id}/accept|reject` — those endpoints are built in Phase 10.
+- `/tmp/pgcheck/check.mjs` was used to validate migrations; to be moved into the repo as
+  `scripts/validate-migrations.mjs` in Phase 12.
 
 ## Decisions (deviations / clarifications of the spec)
 
@@ -87,6 +91,13 @@ _(Append-only. Each decision: what, why.)_
 15. **Flag cache is per server instance** (5-min TTL, per spec). Changes are immediate on the instance
     that made them; other serverless instances converge within the TTL. `FLAG_CACHE_TTL_MS` overrides it.
     When the DB is unreachable, built-in restrictive defaults (`types/flags.ts`) are used.
+17. **Access requests are created explicitly by the user** ("Request access" button on
+    `/admin/request-access`), as in the product spec, rather than automatically on signup (meta prompt).
+    This avoids flooding the super admin with requests from people who only want to play.
+    Signup with the approval flag OFF gives role `admin`; with it ON, role `user`. While the flag is OFF,
+    every active user has admin-portal access (`hasAdminAccess`).
+18. **Client state** uses zustand stores in `store/` (session, toast, settings). Settings persist to
+    localStorage (device-local, applies across sessions on that device).
 16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
     the client/server boundary is enforced by ESLint instead.
 

@@ -51,6 +51,11 @@ function applyCors(req: NextApiRequest, res: NextApiResponse): boolean {
   return true;
 }
 
+/** Postgres error codes surfaced by PostgREST, e.g. 23505 unique_violation. */
+export function isPgError(err: unknown, code: string): boolean {
+  return typeof err === 'object' && err !== null && (err as { code?: unknown }).code === code;
+}
+
 function sendError(res: NextApiResponse, err: unknown): void {
   let status = 500;
   let body: ApiErrorBody = { error: { code: 'internal_error', message: 'Something went wrong. Please try again.' } };
@@ -67,6 +72,12 @@ function sendError(res: NextApiResponse, err: unknown): void {
         details: err.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
       },
     };
+  } else if (isPgError(err, '23505')) {
+    status = 409;
+    body = { error: { code: 'conflict', message: 'That already exists.' } };
+  } else if (isPgError(err, '23503') || isPgError(err, '23514') || isPgError(err, '22P02')) {
+    status = 400;
+    body = { error: { code: 'bad_request', message: 'Invalid reference or value.' } };
   } else {
     console.error('[api] unhandled error', err);
   }
