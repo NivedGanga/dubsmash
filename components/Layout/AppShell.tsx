@@ -26,17 +26,18 @@ export function AppShell({ children, wide = false, bell }: { children: ReactNode
   const me = useSession((s) => s.me);
   const router = useRouter();
   return (
-    <div className="min-h-screen">
+    <div className="game-bg min-h-screen">
       <header className="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/90 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
-          <Link href={me ? '/game' : '/'} className="mr-4 font-display text-2xl font-black tracking-tight text-brand-500">
-            Dubsmash
+          <Link href={me ? '/game' : '/'} className="mr-4 flex items-baseline gap-1.5 font-display">
+            <span className="wordmark text-2xl font-black tracking-tight">DUBSMASH</span>
+            <span className="hidden text-xs font-bold uppercase tracking-widest text-ink-400 sm:inline">party dubbing</span>
           </Link>
           {me && (
             <>
               <NavLink href="/game">Play</NavLink>
               {me.flags.friend_system_enabled && <NavLink href="/friends">Friends</NavLink>}
-              <NavLink href="/admin">Admin</NavLink>
+              {me.admin_access.status === 'granted' && <NavLink href="/admin">Admin</NavLink>}
               <div className="ml-auto flex items-center gap-2">
                 {bell}
                 <NavLink href="/settings">Settings</NavLink>

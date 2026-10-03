@@ -4,7 +4,7 @@ import type { AdminAccessState } from '@/types/api';
 import { api, errorMessage } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { refreshMe } from '@/components/Common/SessionProvider';
-import { Shell } from '@/components/Layout/Shell';
+import { AdminShell } from '@/components/Layout/AdminShell';
 import { ErrorBox, FullPageSpinner } from '@/components/Common/ui';
 
 export default function RequestAccessPage() {
@@ -33,7 +33,7 @@ export default function RequestAccessPage() {
   }
 
   return (
-    <Shell>
+    <AdminShell>
       {!allowed || !access ? (
         <FullPageSpinner />
       ) : (
@@ -62,6 +62,6 @@ export default function RequestAccessPage() {
           </div>
         </div>
       )}
-    </Shell>
+    </AdminShell>
   );
 }

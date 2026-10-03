@@ -39,8 +39,11 @@ export default function LoginPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-sm">
-        <h1 className="mb-6 text-center font-display text-4xl font-black">Welcome back</h1>
-        <form className="card space-y-4" onSubmit={onSubmit}>
+        <p className="mb-1 text-center text-sm font-bold uppercase tracking-widest text-ink-400">Player login</p>
+        <h1 className="mb-6 text-center font-display text-4xl font-black">
+          <span className="wordmark text-glow">Back for more?</span>
+        </h1>
+        <form className="card card-glow space-y-4" onSubmit={onSubmit}>
           {(error || (status === 'error' && sessionError)) && <ErrorBox message={error ?? sessionError!} />}
           <div>
             <label className="label" htmlFor="email">Email</label>
@@ -50,8 +53,8 @@ export default function LoginPage() {
             <label className="label" htmlFor="password">Password</label>
             <input id="password" type="password" className="input" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <button className="btn-primary w-full" disabled={busy}>
-            {busy ? 'Logging in…' : 'Log in'}
+          <button className="btn-primary w-full py-3 font-display text-lg uppercase tracking-wider" disabled={busy}>
+            {busy ? 'Logging in…' : '▶ Continue'}
           </button>
           <button
             type="button"
@@ -72,6 +75,9 @@ export default function LoginPage() {
         </form>
         <p className="mt-4 text-center text-sm text-ink-200">
           New here? <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-brand-300 hover:underline">Create an account</Link>
+        </p>
+        <p className="mt-2 text-center text-xs text-ink-400">
+          Clip manager? <Link href="/admin/login" className="hover:text-white hover:underline">Admin portal sign-in →</Link>
         </p>
       </div>
     </AppShell>

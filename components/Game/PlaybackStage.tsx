@@ -161,7 +161,7 @@ export function PlaybackStage({
               <p className="animate-pulse text-lg">Loading everyone&apos;s takes…</p>
             ) : (
               <>
-                <button className="btn-primary px-8 py-4 text-2xl" onClick={() => play()}>▶ Watch the scene</button>
+                <button className="btn-primary animate-pulse-glow px-8 py-4 font-display text-2xl uppercase tracking-wider" onClick={() => play()}>▶ Watch the scene</button>
                 {isHost && session.players.length > 1 && (
                   <button className="btn-secondary" onClick={() => void playForEveryone()}>Play for everyone at once</button>
                 )}
@@ -173,7 +173,7 @@ export function PlaybackStage({
         {phase === 'credits' && (
           <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-black/80">
             <div className="text-center" style={{ animation: 'credits 6s linear forwards' }}>
-              <p className="mb-6 font-display text-4xl font-black text-brand-500">{clip.title}</p>
+              <p className="mb-6 font-display text-4xl font-black text-glow text-brand-500">{clip.title}</p>
               {clip.characters.map((c) => {
                 const p = session.players.find((x) => x.character_ids.includes(c.id));
                 return (

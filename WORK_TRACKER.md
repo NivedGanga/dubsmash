@@ -65,6 +65,15 @@ _(Write here what is half-done in the current phase, so the next person can pick
 - Firebase `authorizedDomains` now includes `dubsmash.vercel.app` + both alias domains
   (was causing `auth/unauthorized-domain` on login). Preview-deployment URLs are each unique —
   add them via Identity Toolkit admin config PATCH if login is needed there.
+- **Two-portal split (user request):** admin portal has its own entry `/admin/login` +
+  `AdminShell` chrome (cyan `admin-*` accent, `.admin-scope` CSS overrides calm the neon styles).
+  `useRequireAuth` sends signed-out users to `/admin/login` for admin requirements, `/login`
+  otherwise. Game nav shows the Admin link only when `admin_access.status === 'granted'`.
+  Game portal restyled arcade/neon: `.game-bg` nebula backdrop, `.wordmark` gradient brand,
+  glow shadows (`shadow-glow`, `text-glow`), arcade push-buttons (`border-b-4` press effect),
+  `animate-float`/`animate-pulse-glow`, landing/login/signup/game/lobby/record/playback/results
+  updated. Underlying auth stays one Firebase project — separation is portal-level (roles gate
+  admin access via `admin_access`/`role` as before).
 - `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
 
 ## Live infrastructure

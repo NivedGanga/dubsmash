@@ -35,7 +35,7 @@ function CredentialsStep() {
   }
 
   return (
-    <form className="card space-y-4" onSubmit={onSubmit}>
+    <form className="card card-glow space-y-4" onSubmit={onSubmit}>
       {error && <ErrorBox message={error} />}
       <div>
         <label className="label" htmlFor="email">Email</label>
@@ -49,8 +49,8 @@ function CredentialsStep() {
         <label className="label" htmlFor="confirm">Confirm password</label>
         <input id="confirm" type="password" className="input" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
       </div>
-      <button className="btn-primary w-full" disabled={busy}>
-        {busy ? 'Creating account…' : 'Create account'}
+      <button className="btn-primary w-full py-3 font-display text-lg uppercase tracking-wider" disabled={busy}>
+        {busy ? 'Creating account…' : '▶ Join the party'}
       </button>
       <SsoButtons onError={setError} />
     </form>
@@ -81,7 +81,7 @@ function UsernameStep({ onDone }: { onDone: (res: SignupResponse) => void }) {
 
   return (
     <form
-      className="card space-y-4"
+      className="card card-glow space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         void submit(false);
@@ -123,7 +123,10 @@ export default function SignupPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-sm">
-        <h1 className="mb-6 text-center font-display text-4xl font-black">{status === 'needs_profile' ? 'Choose a username' : 'Join Dubsmash'}</h1>
+        <p className="mb-1 text-center text-sm font-bold uppercase tracking-widest text-ink-400">New player</p>
+        <h1 className="mb-6 text-center font-display text-4xl font-black">
+          <span className="wordmark text-glow">{status === 'needs_profile' ? 'Pick your handle' : 'Join Dubsmash'}</span>
+        </h1>
         {status === 'loading' ? (
           <FullPageSpinner />
         ) : status === 'needs_profile' ? (

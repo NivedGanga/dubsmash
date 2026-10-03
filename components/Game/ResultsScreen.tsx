@@ -44,8 +44,9 @@ export function ResultsScreen({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <p className="text-sm uppercase tracking-wider text-ink-400">That&apos;s a wrap!</p>
-        <h1 className="font-display text-4xl font-black">{clip.title}</h1>
+        <p className="animate-float text-5xl" aria-hidden>🎬</p>
+        <p className="mt-2 text-sm font-bold uppercase tracking-widest text-brand-300">That&apos;s a wrap!</p>
+        <h1 className="font-display text-4xl font-black text-glow">{clip.title}</h1>
         {gameSeconds !== null && <p className="text-sm text-ink-200">Recorded in {formatDuration(gameSeconds)}</p>}
       </div>
 

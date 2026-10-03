@@ -73,7 +73,7 @@ export function GameLobby({ details, meId, onChanged }: { details: SessionDetail
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-wider text-ink-400">Lobby</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-brand-300">⚑ Lobby</p>
           <h1 className="font-display text-3xl font-black">{clip.title}</h1>
           <p className="text-sm text-ink-200">
             {formatDuration(clip.duration_seconds)} · {clip.characters.length} characters · {session.players.length}/{MAX_PLAYERS} players
@@ -88,7 +88,9 @@ export function GameLobby({ details, meId, onChanged }: { details: SessionDetail
         </div>
       </div>
 
-      <AvatarDisplay avatars={avatars} className="h-80" />
+      <div className="card-glow overflow-hidden rounded-3xl border border-brand-500/30">
+        <AvatarDisplay avatars={avatars} className="h-80" />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card space-y-3">
@@ -132,12 +134,12 @@ export function GameLobby({ details, meId, onChanged }: { details: SessionDetail
             </ol>
           </div>
           {isHost ? (
-            <button className="btn-primary py-3 text-lg" disabled={busy || !allReady} onClick={() => void call('start', {})}>
-              {allReady ? 'Start game' : `Waiting for ${others.filter((p) => !p.ready).length} player(s)…`}
+            <button className="btn-primary py-3 font-display text-xl uppercase tracking-wider" disabled={busy || !allReady} onClick={() => void call('start', {})}>
+              {allReady ? '▶ Start game' : `Waiting for ${others.filter((p) => !p.ready).length} player(s)…`}
             </button>
           ) : (
             me && (
-              <button className={`${me.ready ? 'btn-secondary' : 'btn-primary'} py-3 text-lg`} disabled={busy} onClick={() => void call('ready', { ready: !me.ready })}>
+              <button className={`${me.ready ? 'btn-secondary' : 'btn-primary animate-pulse-glow'} py-3 font-display text-xl uppercase tracking-wider`} disabled={busy} onClick={() => void call('ready', { ready: !me.ready })}>
                 {me.ready ? "I'm not ready" : "I'm ready!"}
               </button>
             )

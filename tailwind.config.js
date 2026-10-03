@@ -12,6 +12,12 @@ module.exports = {
           600: '#e6155a',
           700: '#c00a49',
         },
+        admin: {
+          300: '#67e8f9',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+        },
         ink: {
           900: '#0d0b1a',
           800: '#161329',
@@ -29,10 +35,25 @@ module.exports = {
       fontFamily: {
         display: ['"Trebuchet MS"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
+      boxShadow: {
+        'glow': '0 0 18px rgba(255, 46, 110, 0.45)',
+        'glow-sm': '0 0 10px rgba(255, 46, 110, 0.3)',
+        'glow-cyan': '0 0 18px rgba(6, 182, 212, 0.35)',
+        'card-glow': '0 0 40px rgba(255, 46, 110, 0.12), inset 0 1px 0 rgba(255,255,255,0.06)',
+      },
       keyframes: {
         pop: { '0%': { transform: 'scale(0.6)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 8px rgba(255,46,110,0.6))' },
+          '50%': { opacity: '0.75', filter: 'drop-shadow(0 0 20px rgba(255,46,110,0.9))' },
+        },
       },
-      animation: { pop: 'pop 0.4s ease-out' },
+      animation: {
+        pop: 'pop 0.4s ease-out',
+        float: 'float 4s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2.4s ease-in-out infinite',
+      },
     },
   },
   plugins: [],

@@ -26,8 +26,8 @@ function TurnTracker({ details, meId }: { details: SessionDetails; meId: string 
         return (
           <li
             key={s.id}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-              state === 'now' ? 'bg-brand-500 text-white' : state === 'done' ? 'bg-green-600/30 text-green-200' : 'bg-ink-700 text-ink-200'
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+              state === 'now' ? 'border-brand-500 bg-brand-500 text-white shadow-glow-sm' : state === 'done' ? 'border-green-600/40 bg-green-600/20 text-green-200' : 'border-ink-600 bg-ink-700 text-ink-200'
             }`}
           >
             <span className="h-2 w-2 rounded-full" style={{ background: s.character.color }} />
@@ -46,8 +46,8 @@ function WaitingForTurn({ details, lastEvent }: { details: SessionDetails; lastE
   const player = details.session.players.find((p) => p.user_id === seq?.user_id);
   const live = lastEvent?.type === 'recording:start' && lastEvent.sequence_id === seq?.id;
   return (
-    <div className="card flex flex-col items-center gap-3 py-12 text-center">
-      <span className="text-5xl">{live ? '🎙️' : '⏳'}</span>
+    <div className="card card-glow flex flex-col items-center gap-3 py-12 text-center">
+      <span className={`text-5xl ${live ? 'animate-pulse-glow' : 'animate-float'}`}>{live ? '🎙️' : '⏳'}</span>
       <p className="text-xl font-bold">
         {player?.display_name ?? 'Someone'} is {live ? 'recording' : 'up next for'}{' '}
         <span style={{ color: seq?.character.color }}>{seq?.character.name}</span>

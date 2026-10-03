@@ -215,7 +215,7 @@ export function RecordingScreen({ details, sequence, onSubmitted }: { details: S
           )}
         </div>
         {sequence.dialogue && (
-          <p className="rounded-2xl bg-ink-800 p-4 text-center text-xl font-semibold">
+          <p className="card-glow rounded-2xl border border-brand-500/30 bg-ink-800 p-4 text-center text-xl font-semibold">
             “{sequence.dialogue}”
           </p>
         )}
@@ -223,9 +223,9 @@ export function RecordingScreen({ details, sequence, onSubmitted }: { details: S
 
       <div className="card space-y-5">
         <div>
-          <p className="text-sm uppercase tracking-wider text-ink-400">Your line · #{sequence.index + 1}</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-brand-300">Your line · #{sequence.index + 1}</p>
           <p className="mt-1 flex items-center gap-2 text-2xl font-black">
-            <span className="h-4 w-4 rounded-full" style={{ background: sequence.character.color }} />
+            <span className="h-4 w-4 rounded-full shadow-glow-sm" style={{ background: sequence.character.color }} />
             {sequence.character.name}
           </p>
           <p className="text-sm text-ink-200">{lineLength.toFixed(1)} seconds</p>
@@ -250,7 +250,7 @@ export function RecordingScreen({ details, sequence, onSubmitted }: { details: S
         </div>
 
         {phase === 'idle' && (
-          <button className="btn-primary w-full py-4 text-xl" onClick={() => void begin()}>
+          <button className="btn-primary animate-pulse-glow w-full py-4 font-display text-xl uppercase tracking-wider" onClick={() => void begin()}>
             ● {existing || attempts ? 'Record again' : 'Record'}
           </button>
         )}

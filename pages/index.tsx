@@ -22,10 +22,14 @@ export default function Home() {
 
   return (
     <AppShell>
-      <section className="flex flex-col items-center py-16 text-center">
-        <p className="badge mb-4 bg-brand-500/20 text-brand-300">Multiplayer dubbing party game</p>
-        <h1 className="max-w-3xl font-display text-5xl font-black leading-tight sm:text-6xl">
-          Dub movie scenes <span className="text-brand-500">with your friends</span>
+      <section className="relative flex flex-col items-center py-16 text-center">
+        <span className="absolute -top-4 left-8 animate-float text-4xl opacity-70" aria-hidden>🎬</span>
+        <span className="absolute right-10 top-10 animate-float text-4xl opacity-70 [animation-delay:1.2s]" aria-hidden>🎙️</span>
+        <span className="absolute -left-2 top-32 animate-float text-3xl opacity-60 [animation-delay:2s]" aria-hidden>🎮</span>
+        <p className="badge mb-4 border border-brand-500/40 bg-brand-500/15 text-brand-300">Multiplayer dubbing party game</p>
+        <h1 className="max-w-3xl font-display text-6xl font-black leading-tight sm:text-7xl">
+          <span className="wordmark text-glow">DUB</span> movie scenes{' '}
+          <span className="text-glow text-brand-500">with your friends</span>
         </h1>
         <p className="mt-5 max-w-xl text-lg text-ink-200">
           Record your own dialogue for famous characters, then watch your 3D avatars act it out with your voices.
@@ -35,11 +39,11 @@ export default function Home() {
             Firebase is not configured. Copy <code>.env.example</code> to <code>.env.local</code> and fill in your credentials.
           </p>
         ) : (
-          <div className="mt-8 flex gap-3">
-            <Link href="/signup" className="btn-primary px-6 py-3 text-lg">
-              Sign up free
+          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+            <Link href="/signup" className="btn-primary px-8 py-4 font-display text-xl uppercase tracking-wider">
+              ▶ Press start
             </Link>
-            <Link href="/login" className="btn-secondary px-6 py-3 text-lg">
+            <Link href="/login" className="btn-secondary px-8 py-4 font-display text-xl uppercase tracking-wider">
               Log in
             </Link>
           </div>
@@ -47,8 +51,8 @@ export default function Home() {
       </section>
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((s, i) => (
-          <div key={s.title} className="card">
-            <p className="font-display text-3xl font-black text-brand-500">{i + 1}</p>
+          <div key={s.title} className="card card-glow transition hover:-translate-y-1 hover:border-brand-500/60">
+            <p className="font-display text-3xl font-black text-glow text-brand-500">{i + 1}</p>
             <p className="mt-2 font-bold">{s.title}</p>
             <p className="mt-1 text-sm text-ink-200">{s.body}</p>
           </div>

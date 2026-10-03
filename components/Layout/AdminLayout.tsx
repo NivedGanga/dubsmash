@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
 import { useRequireAuth, type AuthRequirement } from '@/hooks/useRequireAuth';
 import { FullPageSpinner } from '@/components/Common/ui';
-import { Shell } from './Shell';
+import { AdminShell } from './AdminShell';
 
 const links: Array<{ href: string; label: string; superOnly?: boolean }> = [
   { href: '/admin/dashboard', label: 'Dashboard' },
@@ -20,7 +20,7 @@ export function AdminLayout({ children, title, requirement = 'admin' }: { childr
   const isSuper = me?.user.role === 'super_admin';
 
   return (
-    <Shell wide>
+    <AdminShell wide>
       {!allowed ? (
         <FullPageSpinner />
       ) : (
@@ -51,6 +51,6 @@ export function AdminLayout({ children, title, requirement = 'admin' }: { childr
           </section>
         </div>
       )}
-    </Shell>
+    </AdminShell>
   );
 }

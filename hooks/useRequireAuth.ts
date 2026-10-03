@@ -28,8 +28,9 @@ export function useRequireAuth(requirement: AuthRequirement = 'user'): RequireAu
   useEffect(() => {
     if (!router.isReady) return;
     const next = encodeURIComponent(router.asPath);
+    const loginPage = requirement === 'user' ? '/login' : '/admin/login';
     if (status === 'unconfigured') void router.replace('/'); // landing page explains missing config
-    else if (status === 'signed_out') void router.replace(`/login?next=${next}`);
+    else if (status === 'signed_out') void router.replace(`${loginPage}?next=${next}`);
     else if (status === 'needs_profile') void router.replace(`/signup?step=username&next=${next}`);
     else if (status === 'ready' && me) {
       if (requirement === 'admin' && !hasAdmin) void router.replace('/admin/request-access');

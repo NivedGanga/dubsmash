@@ -13,31 +13,70 @@ body {
 }
 
 @layer components {
+  /* ------- Game portal: arcade/neon theme ------- */
+  .game-bg {
+    background:
+      radial-gradient(60rem 30rem at 15% -10%, rgba(255, 46, 110, 0.14), transparent 60%),
+      radial-gradient(50rem 28rem at 85% -15%, rgba(124, 58, 237, 0.16), transparent 60%),
+      radial-gradient(45rem 25rem at 50% 115%, rgba(6, 182, 212, 0.1), transparent 60%),
+      theme('colors.ink.900');
+    background-attachment: fixed;
+  }
+  .admin-bg {
+    background:
+      radial-gradient(50rem 25rem at 80% -15%, rgba(6, 182, 212, 0.09), transparent 60%),
+      theme('colors.ink.900');
+    background-attachment: fixed;
+  }
+  .wordmark {
+    @apply bg-gradient-to-r from-brand-500 via-fuchsia-400 to-cyan-300 bg-clip-text text-transparent;
+  }
+  .text-glow {
+    text-shadow: 0 0 18px rgba(255, 46, 110, 0.55), 0 0 42px rgba(255, 46, 110, 0.25);
+  }
+  .text-glow-cyan {
+    text-shadow: 0 0 18px rgba(6, 182, 212, 0.55), 0 0 42px rgba(6, 182, 212, 0.25);
+  }
+  .card-glow {
+    @apply shadow-card-glow border-ink-600;
+  }
+
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-300;
+    @apply btn border-b-4 border-brand-700 bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-glow hover:from-brand-500 hover:to-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-300 active:translate-y-0.5 active:border-b-0;
   }
   .btn-secondary {
-    @apply btn bg-ink-700 text-white hover:bg-ink-600;
+    @apply btn border-b-4 border-ink-900 bg-ink-700 text-white hover:bg-ink-600 active:translate-y-0.5 active:border-b-0;
   }
   .btn-ghost {
     @apply btn bg-transparent text-ink-200 hover:bg-ink-700 hover:text-white;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn border-b-4 border-red-800 bg-red-600 text-white hover:bg-red-500 active:translate-y-0.5 active:border-b-0;
+  }
+  .btn-admin {
+    @apply btn border-b-4 border-admin-700 bg-admin-600 text-white shadow-glow-cyan hover:bg-admin-500 active:translate-y-0.5 active:border-b-0;
   }
   .card {
-    @apply rounded-2xl border border-ink-700 bg-ink-800 p-5 shadow-lg;
+    @apply rounded-2xl border border-ink-700 bg-ink-800/90 p-5 shadow-lg;
   }
   .input {
-    @apply w-full rounded-xl border border-ink-600 bg-ink-900 px-3 py-2 text-white placeholder-ink-400 focus:border-brand-500 focus:outline-none;
+    @apply w-full rounded-xl border border-ink-600 bg-ink-900 px-3 py-2 text-white placeholder-ink-400 transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40;
   }
   .label {
     @apply mb-1 block text-sm font-medium text-ink-200;
   }
   .badge {
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+
+  /* ------- Admin portal: calmer console overrides (scope: .admin-scope) ------- */
+  .admin-scope .btn-primary {
+    @apply border-admin-700 from-admin-600 to-admin-500 shadow-none hover:from-admin-500 hover:to-admin-500;
+  }
+  .admin-scope .card {
+    @apply border-ink-700 bg-ink-800 shadow-md;
   }
 }
