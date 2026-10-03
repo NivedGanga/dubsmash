@@ -15,7 +15,7 @@ const difficultyColor = { easy: 'text-green-300', medium: 'text-yellow-300', har
 function ClipTile({ clip, onPick }: { clip: PlayableClip; onPick: () => void }) {
   const length = Number(clip.trim_end ?? clip.duration_seconds) - Number(clip.trim_start);
   return (
-    <button className="card group flex flex-col gap-3 p-3 text-left transition hover:-translate-y-1 hover:border-brand-500 hover:shadow-glow" onClick={onPick}>
+    <button className="card group flex flex-col gap-3 p-3 text-left transition hover:-translate-y-2 hover:rotate-1 hover:border-fg-pink/60 hover:shadow-glow" onClick={onPick}>
       <div className="relative aspect-video overflow-hidden rounded-xl bg-ink-900">
         {clip.thumbnail_url && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -62,20 +62,22 @@ export default function GamePage() {
 
   return (
     <Shell wide>
-      <section className="card-glow mb-10 flex flex-col gap-6 overflow-hidden rounded-3xl border border-brand-500/40 bg-gradient-to-br from-brand-600 via-brand-600/80 to-violet-800 p-8 shadow-glow sm:flex-row sm:items-center">
+      <section className="relative mb-10 flex flex-col gap-6 overflow-hidden rounded-[2.5rem] border-2 border-white/20 bg-gradient-to-br from-fg-purple via-brand-600 to-fg-pink p-8 shadow-glow sm:flex-row sm:items-center">
+        <span className="bean right-4 top-4 h-14 w-10 animate-float bg-fg-yellow/80 [border-radius:55%_45%_50%_50%/60%_55%_45%_40%]" aria-hidden />
+        <span className="bean bottom-4 right-1/3 h-8 w-6 animate-float bg-white/40 [animation-delay:1s] [border-radius:60%_40%_55%_45%/50%_60%_40%_50%]" aria-hidden />
         <div className="flex-1">
-          <p className="text-sm font-bold uppercase tracking-widest text-brand-100">Player 1 · {me.user.display_name}</p>
-          <h1 className="mt-1 font-display text-4xl font-black text-glow">READY TO DUB?</h1>
-          <p className="mt-2 text-brand-100">
+          <p className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white w-fit">Player 1 · {me.user.display_name}</p>
+          <h1 className="mt-3 font-display text-5xl text-white drop-shadow-[0_5px_0_rgba(0,0,0,0.3)]">READY TO DUB?</h1>
+          <p className="mt-2 font-medium text-white/90">
             {friendsEnabled ? `${onlineCount} friend${onlineCount === 1 ? '' : 's'} online now.` : 'Pick a scene and start recording.'}
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn animate-pulse-glow border-b-4 border-yellow-600 bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-display text-lg uppercase tracking-wider text-ink-900 hover:from-yellow-300 hover:to-amber-400 active:translate-y-0.5 active:border-b-0" onClick={() => clipsRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+        <div className="flex flex-col gap-3 sm:items-end">
+          <button className="btn-yellow animate-bounce-soft px-10 py-4 font-display text-2xl" onClick={() => clipsRef.current?.scrollIntoView({ behavior: 'smooth' })}>
             ▶ Play
           </button>
           {friendsEnabled && (
-            <Link href="/friends" className="btn border-b-4 border-ink-900/60 bg-ink-900/40 px-6 py-3 text-lg text-white hover:bg-ink-900/60 active:translate-y-0.5 active:border-b-0">Invite friends</Link>
+            <Link href="/friends" className="btn-ghost border-2 border-white/30 px-6 py-2 text-sm">Invite friends</Link>
           )}
         </div>
       </section>
@@ -83,8 +85,8 @@ export default function GamePage() {
       <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
         <section ref={clipsRef}>
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <h2 className="mr-auto font-display text-2xl font-black uppercase tracking-wide">
-              Choose your <span className="text-glow text-brand-500">scene</span>
+            <h2 className="mr-auto font-display text-2xl tracking-wide">
+              CHOOSE YOUR <span className="text-fg-yellow drop-shadow-[0_3px_0_rgba(0,0,0,0.35)]">SCENE</span>
             </h2>
             <input className="input w-48 py-1.5" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search scenes" />
             <select className="input w-auto py-1.5" value={chars} onChange={(e) => setChars(e.target.value)} aria-label="Number of roles">

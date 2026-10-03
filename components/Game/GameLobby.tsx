@@ -73,8 +73,8 @@ export function GameLobby({ details, meId, onChanged }: { details: SessionDetail
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase tracking-widest text-brand-300">⚑ Lobby</p>
-          <h1 className="font-display text-3xl font-black">{clip.title}</h1>
+          <p className="font-display text-sm uppercase tracking-widest text-fg-cyan drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">⚑ Lobby</p>
+          <h1 className="font-display text-3xl text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.35)]">{clip.title}</h1>
           <p className="text-sm text-ink-200">
             {formatDuration(clip.duration_seconds)} · {clip.characters.length} characters · {session.players.length}/{MAX_PLAYERS} players
             {pendingInvites > 0 && ` · ${pendingInvites} invited`}
@@ -88,7 +88,7 @@ export function GameLobby({ details, meId, onChanged }: { details: SessionDetail
         </div>
       </div>
 
-      <div className="card-glow overflow-hidden rounded-3xl border border-brand-500/30">
+      <div className="card-glow overflow-hidden rounded-[2.5rem] border-2 border-white/20">
         <AvatarDisplay avatars={avatars} className="h-80" />
       </div>
 

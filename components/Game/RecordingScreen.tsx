@@ -223,7 +223,7 @@ export function RecordingScreen({ details, sequence, onSubmitted }: { details: S
 
       <div className="card space-y-5">
         <div>
-          <p className="text-sm font-bold uppercase tracking-widest text-brand-300">Your line · #{sequence.index + 1}</p>
+          <p className="font-display text-sm uppercase tracking-widest text-fg-cyan drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">Your line · #{sequence.index + 1}</p>
           <p className="mt-1 flex items-center gap-2 text-2xl font-black">
             <span className="h-4 w-4 rounded-full shadow-glow-sm" style={{ background: sequence.character.color }} />
             {sequence.character.name}

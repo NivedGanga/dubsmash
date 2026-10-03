@@ -19,12 +19,22 @@ module.exports = {
           700: '#0e7490',
         },
         ink: {
-          900: '#0d0b1a',
-          800: '#161329',
-          700: '#211c3b',
-          600: '#2e2852',
-          400: '#6b6496',
-          200: '#bdb7e0',
+          900: '#1e0a3c',
+          800: '#2b1250',
+          700: '#3b1c66',
+          600: '#4c2a7d',
+          400: '#8b7bb8',
+          200: '#cfc4ee',
+        },
+        fg: {
+          pink: '#ff4dc4',
+          pinkdark: '#c026a8',
+          cyan: '#2ad4ee',
+          cyandark: '#0e9bb5',
+          yellow: '#ffd23f',
+          yellowdark: '#d9a810',
+          purple: '#a855f7',
+          green: '#4ade80',
         },
         charA: '#ef4444',
         charB: '#3b82f6',
@@ -33,7 +43,7 @@ module.exports = {
         unmapped: '#6b7280',
       },
       fontFamily: {
-        display: ['"Trebuchet MS"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Titan One"', '"Trebuchet MS"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'glow': '0 0 18px rgba(255, 46, 110, 0.45)',
@@ -44,6 +54,8 @@ module.exports = {
       keyframes: {
         pop: { '0%': { transform: 'scale(0.6)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
         float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+        wobble: { '0%, 100%': { transform: 'rotate(-3deg)' }, '50%': { transform: 'rotate(3deg)' } },
+        'bounce-soft': { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.06)' } },
         'pulse-glow': {
           '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 8px rgba(255,46,110,0.6))' },
           '50%': { opacity: '0.75', filter: 'drop-shadow(0 0 20px rgba(255,46,110,0.9))' },
@@ -52,6 +64,8 @@ module.exports = {
       animation: {
         pop: 'pop 0.4s ease-out',
         float: 'float 4s ease-in-out infinite',
+        wobble: 'wobble 3s ease-in-out infinite',
+        'bounce-soft': 'bounce-soft 2s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 2.4s ease-in-out infinite',
       },
     },

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import type { MeResponse } from '@/types/api';
 import { useSession, type SessionStatus } from '@/store/session';
+import { getPortal } from '@/lib/portal';
 
 export type AuthRequirement = 'user' | 'admin' | 'super_admin';
 
@@ -22,8 +23,11 @@ export function useRequireAuth(requirement: AuthRequirement = 'user'): RequireAu
 
   const hasAdmin = me?.admin_access.status === 'granted';
   const isSuper = me?.user.role === 'super_admin';
+  const portal = status === 'ready' ? getPortal() : null;
+  // Sessions are portal-scoped: an admin-portal session can't open game pages and vice versa.
+  const portalOk = requirement === 'user' ? portal !== 'admin' : portal === 'admin';
   const allowed =
-    status === 'ready' && !!me && (requirement === 'user' || (requirement === 'admin' && hasAdmin) || (requirement === 'super_admin' && isSuper));
+    status === 'ready' && !!me && portalOk && (requirement === 'user' || (requirement === 'admin' && hasAdmin) || (requirement === 'super_admin' && isSuper));
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -33,6 +37,10 @@ export function useRequireAuth(requirement: AuthRequirement = 'user'): RequireAu
     else if (status === 'signed_out') void router.replace(`${loginPage}?next=${next}`);
     else if (status === 'needs_profile') void router.replace(`/signup?step=username&next=${next}`);
     else if (status === 'ready' && me) {
+      if (!portalOk) {
+        void router.replace(`${loginPage}?next=${next}`);
+        return;
+      }
       if (requirement === 'admin' && !hasAdmin) void router.replace('/admin/request-access');
       if (requirement === 'super_admin' && !isSuper) void router.replace(hasAdmin ? '/admin/dashboard' : '/admin/request-access');
     }

@@ -13,13 +13,13 @@ body {
 }
 
 @layer components {
-  /* ------- Game portal: arcade/neon theme ------- */
+  /* ------- Game portal: Fall Guys-style candy theme ------- */
   .game-bg {
     background:
-      radial-gradient(60rem 30rem at 15% -10%, rgba(255, 46, 110, 0.14), transparent 60%),
-      radial-gradient(50rem 28rem at 85% -15%, rgba(124, 58, 237, 0.16), transparent 60%),
-      radial-gradient(45rem 25rem at 50% 115%, rgba(6, 182, 212, 0.1), transparent 60%),
-      theme('colors.ink.900');
+      radial-gradient(55rem 32rem at 10% -10%, rgba(255, 77, 196, 0.35), transparent 60%),
+      radial-gradient(50rem 30rem at 90% 5%, rgba(42, 212, 238, 0.22), transparent 60%),
+      radial-gradient(60rem 34rem at 50% 120%, rgba(168, 85, 247, 0.3), transparent 65%),
+      linear-gradient(180deg, #2b0e52 0%, #1e0a3c 55%, #170736 100%);
     background-attachment: fixed;
   }
   .admin-bg {
@@ -29,54 +29,99 @@ body {
     background-attachment: fixed;
   }
   .wordmark {
-    @apply bg-gradient-to-r from-brand-500 via-fuchsia-400 to-cyan-300 bg-clip-text text-transparent;
+    @apply text-white;
+    text-shadow:
+      3px 3px 0 theme('colors.fg.pink'),
+      6px 6px 0 rgba(42, 212, 238, 0.45),
+      0 12px 30px rgba(0, 0, 0, 0.45);
   }
   .text-glow {
-    text-shadow: 0 0 18px rgba(255, 46, 110, 0.55), 0 0 42px rgba(255, 46, 110, 0.25);
+    text-shadow: 0 0 18px rgba(255, 77, 196, 0.6), 0 0 42px rgba(255, 77, 196, 0.3);
   }
   .text-glow-cyan {
     text-shadow: 0 0 18px rgba(6, 182, 212, 0.55), 0 0 42px rgba(6, 182, 212, 0.25);
   }
   .card-glow {
-    @apply shadow-card-glow border-ink-600;
+    @apply border-white/25 shadow-card-glow;
+  }
+  .bean {
+    @apply absolute rounded-full opacity-70;
+    box-shadow: inset -6px -8px 0 rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.3);
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-bold transition duration-150 disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn border-b-4 border-brand-700 bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-glow hover:from-brand-500 hover:to-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-300 active:translate-y-0.5 active:border-b-0;
+    @apply btn bg-gradient-to-b from-fg-pink to-brand-600 text-white hover:scale-105 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:translate-y-1.5;
+    box-shadow: 0 6px 0 theme('colors.fg.pinkdark'), 0 14px 28px rgba(0, 0, 0, 0.4);
+  }
+  .btn-primary:active {
+    box-shadow: 0 1px 0 theme('colors.fg.pinkdark');
   }
   .btn-secondary {
-    @apply btn border-b-4 border-ink-900 bg-ink-700 text-white hover:bg-ink-600 active:translate-y-0.5 active:border-b-0;
+    @apply btn bg-gradient-to-b from-fg-cyan to-fg-cyandark text-ink-900 hover:scale-105 hover:brightness-110 active:translate-y-1.5;
+    box-shadow: 0 6px 0 #0a7c91, 0 14px 28px rgba(0, 0, 0, 0.35);
+  }
+  .btn-secondary:active {
+    box-shadow: 0 1px 0 #0a7c91;
+  }
+  .btn-yellow {
+    @apply btn bg-gradient-to-b from-fg-yellow to-amber-500 text-ink-900 hover:scale-105 hover:brightness-105 active:translate-y-1.5;
+    box-shadow: 0 6px 0 theme('colors.fg.yellowdark'), 0 14px 28px rgba(0, 0, 0, 0.4);
+  }
+  .btn-yellow:active {
+    box-shadow: 0 1px 0 theme('colors.fg.yellowdark');
   }
   .btn-ghost {
-    @apply btn bg-transparent text-ink-200 hover:bg-ink-700 hover:text-white;
+    @apply btn bg-white/10 text-white hover:bg-white/20;
   }
   .btn-danger {
-    @apply btn border-b-4 border-red-800 bg-red-600 text-white hover:bg-red-500 active:translate-y-0.5 active:border-b-0;
+    @apply btn bg-gradient-to-b from-red-500 to-red-700 text-white hover:scale-105 hover:brightness-110 active:translate-y-1.5;
+    box-shadow: 0 6px 0 #991b1b, 0 14px 28px rgba(0, 0, 0, 0.35);
+  }
+  .btn-danger:active {
+    box-shadow: 0 1px 0 #991b1b;
   }
   .btn-admin {
-    @apply btn border-b-4 border-admin-700 bg-admin-600 text-white shadow-glow-cyan hover:bg-admin-500 active:translate-y-0.5 active:border-b-0;
+    @apply btn bg-admin-600 text-white hover:bg-admin-500;
+    box-shadow: 0 4px 0 theme('colors.admin.700');
+  }
+  .btn-admin:active {
+    box-shadow: none;
   }
   .card {
-    @apply rounded-2xl border border-ink-700 bg-ink-800/90 p-5 shadow-lg;
+    @apply rounded-[2rem] border-2 border-white/15 bg-ink-800/80 p-5 shadow-xl backdrop-blur;
   }
   .input {
-    @apply w-full rounded-xl border border-ink-600 bg-ink-900 px-3 py-2 text-white placeholder-ink-400 transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40;
+    @apply w-full rounded-full border-2 border-white/20 bg-ink-900/70 px-4 py-2 text-white placeholder-ink-400 transition focus:border-fg-cyan focus:outline-none focus:ring-2 focus:ring-fg-cyan/40;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-ink-200;
+    @apply mb-1 block text-sm font-semibold text-ink-200;
   }
   .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center rounded-full border border-white/10 px-2 py-0.5 text-xs font-semibold;
   }
 
   /* ------- Admin portal: calmer console overrides (scope: .admin-scope) ------- */
   .admin-scope .btn-primary {
-    @apply border-admin-700 from-admin-600 to-admin-500 shadow-none hover:from-admin-500 hover:to-admin-500;
+    @apply rounded-xl border-b-4 border-admin-700 from-admin-600 to-admin-500 hover:scale-100;
+    box-shadow: none;
+  }
+  .admin-scope .btn-primary:active {
+    box-shadow: none;
+  }
+  .admin-scope .btn-secondary {
+    @apply rounded-xl border-b-4 border-ink-900 from-ink-700 to-ink-700 text-white hover:scale-100 hover:from-ink-600 hover:to-ink-600;
+    box-shadow: none;
+  }
+  .admin-scope .btn-secondary:active {
+    box-shadow: none;
   }
   .admin-scope .card {
-    @apply border-ink-700 bg-ink-800 shadow-md;
+    @apply rounded-2xl border border-ink-700 bg-ink-800 shadow-md backdrop-blur-none;
+  }
+  .admin-scope .input {
+    @apply rounded-xl border-ink-600 bg-ink-900 focus:border-admin-500 focus:ring-admin-500/40;
   }
 }

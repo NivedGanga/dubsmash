@@ -44,10 +44,10 @@ export function ResultsScreen({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <p className="animate-float text-5xl" aria-hidden>🎬</p>
-        <p className="mt-2 text-sm font-bold uppercase tracking-widest text-brand-300">That&apos;s a wrap!</p>
-        <h1 className="font-display text-4xl font-black text-glow">{clip.title}</h1>
-        {gameSeconds !== null && <p className="text-sm text-ink-200">Recorded in {formatDuration(gameSeconds)}</p>}
+        <p className="animate-bounce-soft text-6xl" aria-hidden>�</p>
+        <p className="mt-3 font-display text-sm uppercase tracking-widest text-fg-yellow drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">That&apos;s a wrap!</p>
+        <h1 className="mt-1 font-display text-4xl text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.35)]">{clip.title}</h1>
+        {gameSeconds !== null && <p className="mt-1 text-sm text-ink-200">Recorded in {formatDuration(gameSeconds)}</p>}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

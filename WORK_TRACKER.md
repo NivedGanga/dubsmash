@@ -65,15 +65,19 @@ _(Write here what is half-done in the current phase, so the next person can pick
 - Firebase `authorizedDomains` now includes `dubsmash.vercel.app` + both alias domains
   (was causing `auth/unauthorized-domain` on login). Preview-deployment URLs are each unique —
   add them via Identity Toolkit admin config PATCH if login is needed there.
-- **Two-portal split (user request):** admin portal has its own entry `/admin/login` +
-  `AdminShell` chrome (cyan `admin-*` accent, `.admin-scope` CSS overrides calm the neon styles).
-  `useRequireAuth` sends signed-out users to `/admin/login` for admin requirements, `/login`
-  otherwise. Game nav shows the Admin link only when `admin_access.status === 'granted'`.
-  Game portal restyled arcade/neon: `.game-bg` nebula backdrop, `.wordmark` gradient brand,
-  glow shadows (`shadow-glow`, `text-glow`), arcade push-buttons (`border-b-4` press effect),
-  `animate-float`/`animate-pulse-glow`, landing/login/signup/game/lobby/record/playback/results
-  updated. Underlying auth stays one Firebase project — separation is portal-level (roles gate
-  admin access via `admin_access`/`role` as before).
+- **Two-portal split with session scoping (user request):** admin portal has its own entry
+  `/admin/login` + `AdminShell` chrome (cyan `admin-*` accent, `.admin-scope` CSS overrides).
+  `lib/portal.ts` stamps `dubsmash_portal` (localStorage) on portal login pages/SsoButtons;
+  `useRequireAuth` enforces it — admin requirements need `portal==='admin'`, game pages reject
+  `portal==='admin'`. Crossing portals shows a "signed in via the other portal" switch card on
+  the login page (explicit user choice; roles still gate admin_access). Logout clears the stamp.
+  Game nav shows the Admin link only when `admin_access.status === 'granted'`.
+- **Game portal = Fall Guys theme (user request):** `Titan One` display font (`_document.tsx`),
+  saturated purple candy `.game-bg`, `.wordmark` white+pink/cyan offset shadows, `fg-*` candy
+  palette (pink/cyan/yellow/purple/green), chunky rounded-full push-buttons with offset shadows
+  (`.btn-primary` pink, `.btn-secondary` cyan, `.btn-yellow` for hero CTAs), `rounded-[2rem]`
+  border-2 cards, `.bean` jelly decorations, `animate-float`/`wobble`/`bounce-soft`. Admin keeps
+  the calm console look via `.admin-scope` overrides (rounded-xl, no candy gradients).
 - `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
 
 ## Live infrastructure

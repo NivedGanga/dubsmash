@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { logout } from '@/lib/auth';
+import { clearPortal } from '@/lib/portal';
 import { useSession } from '@/store/session';
 import { AvatarBadge } from '@/components/Common/AvatarBadge';
 
@@ -10,7 +11,7 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
   const router = useRouter();
   const active = router.pathname === href || (href !== '/' && router.pathname.startsWith(href));
   return (
-    <Link href={href} className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${active ? 'bg-ink-700 text-white' : 'text-ink-200 hover:text-white'}`}>
+    <Link href={href} className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${active ? 'bg-white/20 text-white shadow-[0_3px_0_rgba(0,0,0,0.3)]' : 'text-ink-200 hover:bg-white/10 hover:text-white'}`}>
       {children}
     </Link>
   );
@@ -18,6 +19,7 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
 
 export async function signOutEverywhere(): Promise<void> {
   await api('/api/auth/logout', { method: 'POST', body: {} }).catch(() => {});
+  clearPortal();
   await logout();
 }
 
@@ -27,10 +29,10 @@ export function AppShell({ children, wide = false, bell }: { children: ReactNode
   const router = useRouter();
   return (
     <div className="game-bg min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b-2 border-white/10 bg-ink-900/80 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
           <Link href={me ? '/game' : '/'} className="mr-4 flex items-baseline gap-1.5 font-display">
-            <span className="wordmark text-2xl font-black tracking-tight">DUBSMASH</span>
+            <span className="wordmark text-2xl tracking-tight">DUBSMASH</span>
             <span className="hidden text-xs font-bold uppercase tracking-widest text-ink-400 sm:inline">party dubbing</span>
           </Link>
           {me && (

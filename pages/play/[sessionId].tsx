@@ -26,8 +26,8 @@ function TurnTracker({ details, meId }: { details: SessionDetails; meId: string 
         return (
           <li
             key={s.id}
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
-              state === 'now' ? 'border-brand-500 bg-brand-500 text-white shadow-glow-sm' : state === 'done' ? 'border-green-600/40 bg-green-600/20 text-green-200' : 'border-ink-600 bg-ink-700 text-ink-200'
+            className={`flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold ${
+              state === 'now' ? 'border-white/60 bg-fg-pink text-white shadow-glow-sm' : state === 'done' ? 'border-fg-green/50 bg-fg-green/20 text-green-200' : 'border-white/15 bg-white/10 text-ink-200'
             }`}
           >
             <span className="h-2 w-2 rounded-full" style={{ background: s.character.color }} />
