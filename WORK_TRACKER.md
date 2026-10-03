@@ -35,13 +35,43 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 10 | Notifications, friends, profile, settings, feature-flags UI | DONE |
 | 11 | Deployment config + README/DEVELOPMENT docs | DONE (`vercel.json`, README.md, DEVELOPMENT.md) |
 | 12 | Tests, typecheck, lint, build verification | DONE (45 tests, migration validator, build OK, endpoint auth audit) |
-| 13 | Handoff (HANDOFF.md, deployment checklist) | DONE — next step is a human: create services + credentials (HANDOFF.md) |
+| 13 | Handoff (HANDOFF.md, deployment checklist) | DONE |
+| 14 | Cloud provisioning via MCP (Supabase, GitHub, Vercel, Firebase, Cloudinary) | IN PROGRESS — see Live infrastructure |
 
 ## In-progress notes
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- Nothing in progress. Next work: deploy with real credentials (HANDOFF.md), then the follow-ups below.
+- **Live infra is provisioned but not fully credentialled.** Done: Supabase project + 8 migrations
+  applied + flags seeded; GitHub repo created and `main` pushed; Vercel project created with 10 env
+  vars and a production deployment triggered from GitHub. Still needed from the user:
+  1. Firebase MCP login (auth code), then create Firebase project + web app + Google provider.
+  2. `SUPABASE_SERVICE_ROLE_KEY` — Supabase dashboard → Settings → API Keys (legacy service_role
+     JWT, or a new `sb_secret_` key). Not retrievable via MCP.
+  3. `CLOUDINARY_API_SECRET` — Cloudinary console → Settings → API keys. Not retrievable via API.
+  4. Firebase Admin service account JSON (project settings → service accounts → generate key) for
+     `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`.
+  5. Then: set those into `.env` and Vercel env vars, set GitHub secrets
+     (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+     `CLOUDINARY_API_SECRET`) so `process-videos.yml` can run, redeploy, run HANDOFF.md checklist.
+- `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
+
+## Live infrastructure
+
+| Service | Resource | Value / ID |
+|---------|----------|------------|
+| Supabase | Project `dubsmash`, region ap-south-1 | ref `snklblypezylwdnpdolq`, https://snklblypezylwdnpdolq.supabase.co |
+| GitHub | Public repo | https://github.com/NivedGanga/dubsmash |
+| Vercel | Project (framework: nextjs, region iad1) | `prj_QqBCF5jU6048RR47sod9GukVpDNB`, https://dubsmash.vercel.app |
+| Cloudinary | Existing free-plan env (user's account) | cloud name `dlba8afnl`, API key `332968182961976` |
+| Firebase | Pending user login via MCP | — |
+| SendGrid | Not provisioned (optional; no MCP) | — |
+
+DB state: migrations 001–008 applied via Supabase MCP `apply_migration`; 7 feature flags seeded.
+Advisor lints: `rls_enabled_no_policy` is intentional (all access via service role); the
+`function_search_path_mutable` and `unindexed_foreign_keys` findings were fixed by migration 008.
+Note: Vercel `ssoProtection` is ON for non-custom-domain deployments — visitors to the *.vercel.app
+URL need Vercel login until it is disabled (update_project → ssoProtection).
 
 ## Decisions (deviations / clarifications of the spec)
 
@@ -145,10 +175,10 @@ _(Append-only. Each decision: what, why.)_
 
 _(Things intentionally left for later, or blocked on credentials. Mirrored in HANDOFF.md.)_
 
-- Not run against real Supabase/Firebase/Cloudinary yet (no credentials in this environment).
-  Everything that can run offline is verified: typecheck, lint, 45 Jest tests (pure logic, jsdom
-  timeline editor, game state machine on a fake Supabase client, real FFmpeg render), SQL on PGlite,
-  production build. First real deployment should follow the "Verify the deployment" list in HANDOFF.md.
+- Supabase is live with all migrations; GitHub + Vercel are provisioned and the first deploy is
+  building. Still missing real Firebase credentials, the Supabase service-role key and the
+  Cloudinary API secret, so auth/uploads/video-rendering are untested end-to-end. See In-progress
+  notes for the exact values needed.
 - Next.js 14 has upstream advisories fixed only in 15+; upgrade recommended.
 - Realtime channels are public (hardening: Supabase third-party auth with Firebase + private channels).
 - No API rate limiting; no email-verification requirement; no i18n; no Sentry/analytics.
