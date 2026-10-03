@@ -42,22 +42,28 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- **Live infra is provisioned but not fully credentialled.** Done: Supabase project + 8 migrations
-  applied + flags seeded; GitHub repo created and `main` pushed; Vercel project created with 10 env
-  vars; production deployment `dpl_94kbzs3nabJewRGchDWVPihVwtzV` is READY at
-  https://dubsmash.vercel.app (pages render; APIs 500 until Firebase + service-role envs are set).
-  Vercel project is NOT git-linked (MCP couldn't reach the personal scope with teamId), so pushes do
-  not auto-deploy — link GitHub in Vercel project settings, or redeploy via `create_deployment`.
-  Firebase is fully provisioned and verified: project `dubsmash-game`, web app
-  `1:157762387371:web:0c6af74aa1ec885896a6ee`, Email/Password + Google providers enabled (user did
-  this in console; verified via API), service account confirmed working (listUsers OK). Client SDK
-  config + FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY written to `.env` and Vercel env vars.
-  GitHub Actions secrets SUPABASE_URL / CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY are set.
-  Still needed from the user:
-  1. `SUPABASE_SERVICE_ROLE_KEY` — Supabase dashboard → Settings → API Keys (legacy service_role
-     JWT, or a new `sb_secret_` key). Not retrievable via MCP. **Blocks everything server-side.**
-  2. `CLOUDINARY_API_SECRET` — Cloudinary console → Settings → API keys. Not retrievable via API.
-  3. Then: set into `.env`, Vercel env vars and GitHub secrets, redeploy, run HANDOFF.md checklist.
+- **All credentials are provisioned; production 500 under diagnosis.** Done: Supabase project +
+  8 migrations + flags seeded; GitHub repo + all 5 Actions secrets; Firebase fully provisioned and
+  verified (`dubsmash-game`, Email/Password + Google enabled, service account works); all env vars
+  on Vercel including SUPABASE_SERVICE_ROLE_KEY, CLOUDINARY_API_SECRET, FIREBASE_*.
+  Deployment `dpl_9LYbgZT7rR3RLasCg7nkfP66BiFh` (commit b45dc4d) is READY but **API routes return
+  HTML 500**: /api/clips/playable, /api/auth/signup (GET should 405 → 500), /api/notifications.
+  Routes WITHOUT firebase-admin imports work fine (webhooks/ffmpeg-complete + auth/refresh-token
+  return proper 405 JSON). Landing page also returns a Next.js 500 page.
+  **Hypothesis: firebase-admin fails at module load** (module-load crash → HTML 500, while
+  in-handler errors return JSON 500). Local dev (Node 22) returns correct 401.
+  Vercel project runs Node 24.x — possible runtime incompatibility.
+  **Next step:** `pages/api/_diag.ts` was added (commit 162ed82, pushed) to dynamically import
+  firebase-admin and report the real error — deploy it and GET /api/_diag to see the error.
+  Vercel MCP kept dropping connections at this point; if still down, ask the user to redeploy
+  from the Vercel dashboard (Deployments → Redeploy latest commit 162ed82).
+  After diagnosis, REMOVE pages/api/_diag.ts.
+- Vercel project is NOT git-linked, so pushes do not auto-deploy — link GitHub in Vercel project
+  settings, or redeploy via `create_deployment` MCP each push.
+- SendGrid: SendGrid domain-authentication DNS records (CNAME/TXT for *.dubsmash.vercel.app)
+  CANNOT be created — vercel.app is a shared domain, no user DNS control. Options: (a) SendGrid
+  Single Sender Verification (no DNS needed), or (b) custom domain. SENDGRID_FROM_EMAIL is set;
+  without SENDGRID_API_KEY the app logs a warning and skips emails (lib/server/email.ts).
 - `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
 
 ## Live infrastructure
@@ -69,7 +75,7 @@ _(Write here what is half-done in the current phase, so the next person can pick
 | Vercel | Project (framework: nextjs, region iad1) | `prj_QqBCF5jU6048RR47sod9GukVpDNB`, https://dubsmash.vercel.app |
 | Cloudinary | Existing free-plan env (user's account) | cloud name `dlba8afnl`, API key `332968182961976` |
 | Firebase | Project `dubsmash-game` + web app + providers + admin SA verified | project number 157762387371 |
-| SendGrid | Not provisioned (optional; no MCP) | — |
+| SendGrid | Optional; `SENDGRID_FROM_EMAIL` set, `SENDGRID_API_KEY` unset — code skips email gracefully | — |
 
 DB state: migrations 001–008 applied via Supabase MCP `apply_migration`; 7 feature flags seeded.
 Advisor lints: `rls_enabled_no_policy` is intentional (all access via service role); the
