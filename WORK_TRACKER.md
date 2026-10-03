@@ -44,7 +44,11 @@ _(Write here what is half-done in the current phase, so the next person can pick
 
 - **Live infra is provisioned but not fully credentialled.** Done: Supabase project + 8 migrations
   applied + flags seeded; GitHub repo created and `main` pushed; Vercel project created with 10 env
-  vars and a production deployment triggered from GitHub. Still needed from the user:
+  vars; production deployment `dpl_94kbzs3nabJewRGchDWVPihVwtzV` is READY at
+  https://dubsmash.vercel.app (pages render; APIs 500 until Firebase + service-role envs are set).
+  Vercel project is NOT git-linked (MCP couldn't reach the personal scope with teamId), so pushes do
+  not auto-deploy — link GitHub in Vercel project settings, or redeploy via `create_deployment`.
+  Still needed from the user:
   1. Firebase MCP login (auth code), then create Firebase project + web app + Google provider.
   2. `SUPABASE_SERVICE_ROLE_KEY` — Supabase dashboard → Settings → API Keys (legacy service_role
      JWT, or a new `sb_secret_` key). Not retrievable via MCP.
