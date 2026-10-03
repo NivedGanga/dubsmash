@@ -35,10 +35,3 @@ export function autoAssignCharacters(characters: ClipCharacter[], players: Sessi
 export function assignmentComplete(characters: ClipCharacter[], players: SessionPlayer[]): boolean {
   return characters.every((c) => players.filter((p) => p.character_ids.includes(c.id)).length === 1);
 }
-
-/** Index of the next sequence (>= from) that has no recording yet, or null when everything is recorded. */
-export function nextUnrecordedIndex(sequences: Sequence[], recordedIds: Set<string>, from = 0): number | null {
-  for (let i = from; i < sequences.length; i++) if (!recordedIds.has(sequences[i]!.id)) return i;
-  for (let i = 0; i < from; i++) if (!recordedIds.has(sequences[i]!.id)) return i;
-  return null;
-}

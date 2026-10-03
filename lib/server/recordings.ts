@@ -17,6 +17,8 @@ export async function saveRecording(user: UserRow, sessionId: string, sequenceId
   const seq = buildSequences(clip.timeline, clip.characters, session.players).find((s) => s.id === sequenceId);
   if (!seq) throw badRequest('Unknown dialogue line.');
   if (seq.user_id !== user.id) throw forbidden('This line belongs to another player.');
+  // Takes (and re-takes) are only accepted for the line whose turn it is.
+  if (seq.index !== session.current_sequence_index) throw new ApiError(409, 'invalid_state', "It's not this line's turn.");
 
   let asset;
   try {

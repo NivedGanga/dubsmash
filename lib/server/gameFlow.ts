@@ -4,7 +4,7 @@
  */
 import type { ClipRow, GameSessionRow, ProcessingJobPayload, SessionPlayer, UserRow } from '@/types/database';
 import { INVITATION_TTL_MS, MAX_PLAYERS } from '@/types/game';
-import { assignmentComplete, autoAssignCharacters, buildSequences, nextUnrecordedIndex } from '@/lib/sequences';
+import { assignmentComplete, autoAssignCharacters, buildSequences } from '@/lib/sequences';
 import { ApiError, badRequest, conflict, forbidden } from './handler';
 import { supabaseAdmin } from './supabase';
 import { broadcastSession } from './realtime';
@@ -174,7 +174,6 @@ export async function leaveSession(sessionId: string, user: UserRow): Promise<Ga
 /** Player confirms the take for the current sequence -> advance to the next unrecorded sequence or finish. */
 export async function submitRecording(sessionId: string, user: UserRow, sequenceId: string) {
   const [clip, recordings] = await Promise.all([getSessionClipFor(sessionId), getSessionRecordings(sessionId)]);
-  const recorded = new Set(recordings.map((r) => r.sequence_id));
   const mine = recordings.find((r) => r.sequence_id === sequenceId && r.user_id === user.id);
   if (!mine) throw badRequest('Upload your recording before submitting.');
 
@@ -185,7 +184,9 @@ export async function submitRecording(sessionId: string, user: UserRow, sequence
     const current = seqs[s.current_sequence_index];
     if (!current || current.id !== sequenceId) throw invalidState("It's not this line's turn.");
     if (current.user_id !== user.id) throw forbidden('This line belongs to another player.');
-    turn.next = nextUnrecordedIndex(seqs, recorded, s.current_sequence_index + 1);
+    // Strictly sequential: every earlier line was confirmed via this same path, so the next line is
+    // simply the following one (a take uploaded early never counts as confirmed).
+    turn.next = s.current_sequence_index + 1 < seqs.length ? s.current_sequence_index + 1 : null;
     return { current_sequence_index: turn.next ?? s.current_sequence_index };
   });
   const nextIndex = turn.next;

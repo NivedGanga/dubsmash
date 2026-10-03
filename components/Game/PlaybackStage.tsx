@@ -100,7 +100,9 @@ export function PlaybackStage({
   // Synchronised start requested by the host.
   useEffect(() => {
     if (lastEvent?.type !== 'playback:start' || phase === 'loading') return;
-    play(Math.max(100, lastEvent.at - Date.now()));
+    // Broadcast payloads are untrusted hints: clamp the start delay to a sane window.
+    const delay = Number(lastEvent.at) - Date.now();
+    play(Number.isFinite(delay) ? Math.min(10_000, Math.max(100, delay)) : 300);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastEvent]);
 

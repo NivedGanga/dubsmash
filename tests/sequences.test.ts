@@ -1,4 +1,4 @@
-import { assignmentComplete, autoAssignCharacters, buildSequences, nextUnrecordedIndex } from '@/lib/sequences';
+import { assignmentComplete, autoAssignCharacters, buildSequences } from '@/lib/sequences';
 import type { ClipCharacter, SessionPlayer } from '@/types/database';
 
 const chars: ClipCharacter[] = [
@@ -44,20 +44,5 @@ describe('sequences', () => {
       [1, 's2', 'p2'],
       [2, 's3', 'p3'],
     ]);
-  });
-
-  it('finds the next unrecorded sequence, wrapping around', () => {
-    const seq = buildSequences(
-      [
-        { id: 'a', start: 0, end: 1, character_id: 'A' },
-        { id: 'b', start: 1, end: 2, character_id: 'B' },
-        { id: 'c', start: 2, end: 3, character_id: 'C' },
-      ],
-      chars,
-      [],
-    );
-    expect(nextUnrecordedIndex(seq, new Set(['a']), 1)).toBe(1);
-    expect(nextUnrecordedIndex(seq, new Set(['b', 'c']), 2)).toBe(0);
-    expect(nextUnrecordedIndex(seq, new Set(['a', 'b', 'c']))).toBeNull();
   });
 });
