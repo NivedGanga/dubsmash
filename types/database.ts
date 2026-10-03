@@ -122,6 +122,8 @@ export interface GameSessionRow {
   invited_user_ids: UUID[];
   state: SessionState;
   current_sequence_index: number;
+  /** Optimistic-concurrency counter (see lib/server/sessions.ts updateSession). */
+  version: number;
   final_video_url: string | null;
   started_at: ISODate | null;
   completed_at: ISODate | null;

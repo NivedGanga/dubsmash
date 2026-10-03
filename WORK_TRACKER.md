@@ -27,7 +27,7 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 2 | DB migrations (11 tables) + seed flags | DONE (validated on PGlite/Postgres 17: apply, idempotent re-run, triggers, RPCs) |
 | 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | DONE (31 unit tests) |
 | 4 | Auth + admin access control (APIs, middleware, dashboard) | DONE |
-| 5 | Admin clip management + timeline editor | TODO |
+| 5 | Admin clip management + timeline editor | DONE (incl. jsdom pointer-drag tests) |
 | 6 | Game sessions + lobby | TODO |
 | 7 | Recording system | TODO |
 | 8 | Video processing pipeline (FFmpeg + GitHub Actions) | TODO |
@@ -98,6 +98,14 @@ _(Append-only. Each decision: what, why.)_
     every active user has admin-portal access (`hasAdminAccess`).
 18. **Client state** uses zustand stores in `store/` (session, toast, settings). Settings persist to
     localStorage (device-local, applies across sessions on that device).
+19. **Clip trimming is non-destructive**: trim_start/trim_end are stored; players get a Cloudinary
+    on-the-fly trimmed URL (`so_/eo_` transformation). The timeline is relative to the trimmed clip.
+    Changing trim after mapping refits the timeline (`fitToDuration`).
+20. **Super admins' own clips skip the approval queue** (they are the approver). Clips can't be
+    reconfigured/deleted while a lobby/recording session uses them (409).
+21. **Playable clips endpoint** is separate (`/api/clips/playable`, any signed-in user, active +
+    configured only, no timeline/dialogue exposed). `/api/clips` is the admin library.
+22. **Max clip length 15 min, 500MB**; uploads > 20MB are sent in 20MB chunks with retry (`lib/upload.ts`).
 16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
     the client/server boundary is enforced by ESLint instead.
 
