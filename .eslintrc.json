@@ -2,5 +2,20 @@
   "extends": "next/core-web-vitals",
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["components/**/*", "hooks/**/*", "store/**/*", "lib/*.ts", "pages/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["@/lib/server/*", "**/lib/server/*"], "message": "Server-only module: do not import from client code." }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -21,8 +21,10 @@ Verify with: `npm run typecheck && npm run lint && npm test && npm run build`.
 
 ## Conventions
 
-- API routes use `lib/api/handler.ts` (`createHandler`) for method routing, auth, and error handling.
-  Throw `ApiError` for expected errors; validate input with zod schemas.
-- Server-only code lives in `lib/server/` and must never be imported from components/pages (client).
+- API routes use `lib/server/handler.ts` (`createHandler`) for method routing, CORS, auth, and error handling.
+  Throw `ApiError` (or `badRequest`/`forbidden`/`notFound`/`conflict`) for expected errors; validate input with zod.
+- Server-only code lives in `lib/server/` and must never be imported from components/hooks/pages `.tsx`
+  (enforced by an ESLint `no-restricted-imports` override). Browser code uses `lib/api.ts` to call the API.
+- Pure logic shared by client and server (timeline, sequences, utils) lives in `lib/*.ts` and is unit tested.
 - Feature flags: always check via `isFeatureEnabled()` from `lib/server/featureFlags.ts`.
 - Real-time: Supabase Realtime broadcast channels (see `lib/realtime.ts`), not a Socket.io server.

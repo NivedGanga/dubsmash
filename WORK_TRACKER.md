@@ -25,7 +25,7 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 0 | Work tracker, AGENTS.md, git init | DONE |
 | 1 | Project init: package.json, Next/TS/Tailwind config, types | DONE |
 | 2 | DB migrations (11 tables) + seed flags | DONE (validated on PGlite/Postgres 17: apply, idempotent re-run, triggers, RPCs) |
-| 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | TODO |
+| 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | DONE (31 unit tests) |
 | 4 | Auth + admin access control (APIs, middleware, dashboard) | TODO |
 | 5 | Admin clip management + timeline editor | TODO |
 | 6 | Game sessions + lobby | TODO |
@@ -78,6 +78,17 @@ _(Append-only. Each decision: what, why.)_
 11. **Video jobs are claimed with `claim_next_video_job()`** (`FOR UPDATE SKIP LOCKED`); jobs stuck in
     `processing` > 30 min are reclaimed (crashed worker).
 12. **Migrations can be validated without Docker**: see "Validating migrations" in DEVELOPMENT.md (PGlite).
+13. **Timeline pointer semantics** (`lib/timeline.ts`): dragging an *edge* pointer (0 or end) inward
+    spawns a new boundary at the drop point while the edge stays (matches the spec's 20s->7s example);
+    dragging an *inner* pointer moves that boundary. Double-click a boundary to remove it. Adjacent
+    same-character sections are merged on assignment. Min section 0.5s, pointers cannot cross.
+14. **Percentage rollout bucket = FNV-1a(`flag_name:user_id`) % 100.** Including the flag name keeps
+    different rollouts independent. Percentage/user_list flags also respect `is_enabled` as a master switch.
+15. **Flag cache is per server instance** (5-min TTL, per spec). Changes are immediate on the instance
+    that made them; other serverless instances converge within the TTL. `FLAG_CACHE_TTL_MS` overrides it.
+    When the DB is unreachable, built-in restrictive defaults (`types/flags.ts`) are used.
+16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
+    the client/server boundary is enforced by ESLint instead.
 
 ## Known gaps / follow-ups
 
