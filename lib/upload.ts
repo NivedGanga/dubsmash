@@ -17,7 +17,7 @@ export interface UploadResult {
   format: string;
 }
 
-export type UploadKind = { kind: 'clip' } | { kind: 'avatar' } | { kind: 'recording'; session_id: string };
+export type UploadKind = { kind: 'clip' } | { kind: 'recording'; session_id: string };
 
 function sendChunk(
   sig: UploadSignatureResponse,

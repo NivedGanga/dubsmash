@@ -22,7 +22,6 @@ const updateSchema = z
     avatar_model: avatarModelSchema,
     avatar_color: hexColorSchema,
     avatar_outfit: avatarOutfitSchema,
-    avatar_url: z.string().url().startsWith('https://res.cloudinary.com/').nullable(),
   })
   .partial()
   .strict();

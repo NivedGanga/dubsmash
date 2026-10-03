@@ -30,9 +30,9 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 5 | Admin clip management + timeline editor | DONE (incl. jsdom pointer-drag tests) |
 | 6 | Game sessions + lobby | DONE (APIs + lobby + game page; `/play/[sessionId]` page is built in Phase 7) |
 | 7 | Recording system | DONE (`lib/audio.ts`, `RecordingScreen`, `pages/play/[sessionId].tsx`) |
-| 8 | Video processing pipeline (FFmpeg + GitHub Actions) | TODO |
+| 8 | Video processing pipeline (FFmpeg + GitHub Actions) | DONE (real ffmpeg render verified in tests; CI workflow added) |
 | 9 | 3D avatars, playback stage, results | DONE (AvatarDisplay, PlaybackStage, ResultsScreen, VideoProcessing, synced `playback:start`) |
-| 10 | Notifications, friends, profile, settings, feature-flags UI | TODO |
+| 10 | Notifications, friends, profile, settings, feature-flags UI | DONE |
 | 11 | Deployment config + README/DEVELOPMENT docs | TODO |
 | 12 | Tests, typecheck, lint, build verification | TODO |
 | 13 | Handoff (HANDOFF.md, deployment checklist) | TODO |
@@ -41,15 +41,8 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- Phase 10 partially done early (needed by the navbar): notifications API (`pages/api/notifications/*`),
-  `hooks/useNotifications.ts`, `components/Common/NotificationBell.tsx`. The bell already calls
-  `/api/friends/requests/{id}/accept|reject`.
-- Friends API (`pages/api/friends/*`, `lib/server/friends.ts`, `hooks/useFriends.ts`) was also built
-  early (Phase 6 needs it for invitations). Phase 10 still needs: `/friends` page, profile, settings,
-  feature-flags admin page + API.
 - TODO Phase 12: unit tests for `lib/server/gameFlow.ts` state machine with a fake Supabase client.
-- `/tmp/pgcheck/check.mjs` was used to validate migrations; to be moved into the repo as
-  `scripts/validate-migrations.mjs` in Phase 12.
+- Migration validation now lives in `scripts/validate-migrations.mjs` (`npm run validate-migrations`).
 
 ## Decisions (deviations / clarifications of the spec)
 
@@ -128,6 +121,19 @@ _(Append-only. Each decision: what, why.)_
     so players watch immediately; the FFmpeg MP4 renders in the background for download/share.
     Host can trigger synchronised playback for all (`POST /api/sessions/:id/playback` -> `playback:start`
     with a wall-clock start time 2s ahead).
+27. **FFmpeg render** (`lib/ffmpeg.ts`): per-take atrim (line + 0.75s) -> loudnorm -> adelay to its
+    line start; amix (normalize=0) -> alimiter -> apad; video trimmed by input seek; H.264/AAC MP4,
+    faststart; `-shortest` bounds output to the video. The original clip audio is muted (a quiet bed
+    is supported via `originalAudioVolume` but off). Worker only downloads from res.cloudinary.com.
+    Output is uploaded to `<root>/renders/<session_id>`; the session becomes `completed`.
+28. **Worker runs up to 3 jobs per Actions run** (`MAX_JOBS_PER_RUN`), 15-min ffmpeg timeout; retry
+    up to 3 attempts (`retry_count`), then `failed`. `/api/webhooks/ffmpeg-complete` (header
+    `x-worker-secret`) lets an external renderer report results instead.
+29. **Critical flags** (`is_critical`: super_admin_approval_required, clip_approval_workflow) need
+    `confirm: true` on the toggle API (428 otherwise) and a confirm dialog in the UI.
+30. **Profile avatars are 3D-only** (model/colour/outfit). Custom image avatars were dropped (YAGNI;
+    the `avatar_url` column stays for future use). The `avatar` Cloudinary upload kind was removed.
+31. **Language setting** is stored (en/es/fr/de) but the UI is English-only for now (no i18n framework).
 16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
     the client/server boundary is enforced by ESLint instead.
 

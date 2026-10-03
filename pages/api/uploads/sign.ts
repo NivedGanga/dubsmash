@@ -8,7 +8,6 @@ import { getSession, isPlayer } from '@/lib/server/sessions';
 
 const schema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('clip') }),
-  z.object({ kind: z.literal('avatar') }),
   z.object({ kind: z.literal('recording'), session_id: z.string().uuid() }),
 ]);
 
@@ -24,13 +23,10 @@ export default createHandler(
         if (!(await hasAdminAccess(req.user))) throw new ApiError(403, 'admin_approval_required', 'You need admin access to upload clips.');
         return signUpload('clip', req.user.id);
       }
-      if (body.kind === 'recording') {
-        const session = await getSession(body.session_id);
-        if (!isPlayer(session, req.user.id)) throw forbidden('You are not in this game.');
-        if (session.state !== 'recording') throw new ApiError(409, 'invalid_state', 'This game is not recording right now.');
-        return signUpload('recording', req.user.id, session.id);
-      }
-      return signUpload('avatar', req.user.id);
+      const session = await getSession(body.session_id);
+      if (!isPlayer(session, req.user.id)) throw forbidden('You are not in this game.');
+      if (session.state !== 'recording') throw new ApiError(409, 'invalid_state', 'This game is not recording right now.');
+      return signUpload('recording', req.user.id, session.id);
     },
   },
   { auth: requireAuth },
