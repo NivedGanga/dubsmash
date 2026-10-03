@@ -33,16 +33,15 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | 8 | Video processing pipeline (FFmpeg + GitHub Actions) | DONE (real ffmpeg render verified in tests; CI workflow added) |
 | 9 | 3D avatars, playback stage, results | DONE (AvatarDisplay, PlaybackStage, ResultsScreen, VideoProcessing, synced `playback:start`) |
 | 10 | Notifications, friends, profile, settings, feature-flags UI | DONE |
-| 11 | Deployment config + README/DEVELOPMENT docs | TODO |
-| 12 | Tests, typecheck, lint, build verification | TODO |
-| 13 | Handoff (HANDOFF.md, deployment checklist) | TODO |
+| 11 | Deployment config + README/DEVELOPMENT docs | DONE (`vercel.json`, README.md, DEVELOPMENT.md) |
+| 12 | Tests, typecheck, lint, build verification | DONE (45 tests, migration validator, build OK, endpoint auth audit) |
+| 13 | Handoff (HANDOFF.md, deployment checklist) | DONE — next step is a human: create services + credentials (HANDOFF.md) |
 
 ## In-progress notes
 
 _(Write here what is half-done in the current phase, so the next person can pick it up.)_
 
-- TODO Phase 12: unit tests for `lib/server/gameFlow.ts` state machine with a fake Supabase client.
-- Migration validation now lives in `scripts/validate-migrations.mjs` (`npm run validate-migrations`).
+- Nothing in progress. Next work: deploy with real credentials (HANDOFF.md), then the follow-ups below.
 
 ## Decisions (deviations / clarifications of the spec)
 
@@ -85,6 +84,8 @@ _(Append-only. Each decision: what, why.)_
     same-character sections are merged on assignment. Min section 0.5s, pointers cannot cross.
 14. **Percentage rollout bucket = FNV-1a(`flag_name:user_id`) % 100.** Including the flag name keeps
     different rollouts independent. Percentage/user_list flags also respect `is_enabled` as a master switch.
+16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
+    the client/server boundary is enforced by ESLint instead.
 15. **Flag cache is per server instance** (5-min TTL, per spec). Changes are immediate on the instance
     that made them; other serverless instances converge within the TTL. `FLAG_CACHE_TTL_MS` overrides it.
     When the DB is unreachable, built-in restrictive defaults (`types/flags.ts`) are used.
@@ -108,7 +109,7 @@ _(Append-only. Each decision: what, why.)_
     voices everyone); the host can re-assign. Any line-up change resets everyone's ready flag. Host is
     implicitly ready; Start requires all *other* players ready. Lines are recorded in timeline order;
     the owner of `current_sequence_index` records, re-records freely (`/api/recordings/upload` replaces
-    the take), then `recording-submit` advances the turn. The last submit moves to `playback`, queues
+    the take), then `recording-submit` advances the turn (see 32). The last submit moves to `playback`, queues
     the render job and returns 202. Host leaving cancels the game; another player leaving mid-game hands
     their lines to the host.
 24. **3D avatars are procedural** (Three.js primitives, shared geometries/materials) rather than GLB
@@ -134,9 +135,21 @@ _(Append-only. Each decision: what, why.)_
 30. **Profile avatars are 3D-only** (model/colour/outfit). Custom image avatars were dropped (YAGNI;
     the `avatar_url` column stays for future use). The `avatar` Cloudinary upload kind was removed.
 31. **Language setting** is stored (en/es/fr/de) but the UI is English-only for now (no i18n framework).
-16. **`server-only` package is not used** (breaks pages-router API routes and the worker script);
-    the client/server boundary is enforced by ESLint instead.
+32. **Turns are strictly sequential** (fix found by `tests/gameFlow.test.ts`): takes/re-takes are only
+    accepted for the line at `current_sequence_index`, and submit always advances to index + 1. An
+    earlier version skipped lines that had an *uploaded but unconfirmed* take.
+33. **Broadcast payloads are untrusted** (public channels): clients only refetch on events; the
+    `playback:start` delay is clamped to 0.1-10s.
 
 ## Known gaps / follow-ups
 
-_(Things intentionally left for later, or blocked on credentials.)_
+_(Things intentionally left for later, or blocked on credentials. Mirrored in HANDOFF.md.)_
+
+- Not run against real Supabase/Firebase/Cloudinary yet (no credentials in this environment).
+  Everything that can run offline is verified: typecheck, lint, 45 Jest tests (pure logic, jsdom
+  timeline editor, game state machine on a fake Supabase client, real FFmpeg render), SQL on PGlite,
+  production build. First real deployment should follow the "Verify the deployment" list in HANDOFF.md.
+- Next.js 14 has upstream advisories fixed only in 15+; upgrade recommended.
+- Realtime channels are public (hardening: Supabase third-party auth with Firebase + private channels).
+- No API rate limiting; no email-verification requirement; no i18n; no Sentry/analytics.
+- No Cypress E2E suite (meta prompt mentions Cypress); would need real services or full mocks.
