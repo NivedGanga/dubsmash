@@ -62,6 +62,9 @@ _(Write here what is half-done in the current phase, so the next person can pick
   CANNOT be created — vercel.app is a shared domain, no user DNS control. Options: (a) SendGrid
   Single Sender Verification (no DNS needed), or (b) custom domain. SENDGRID_FROM_EMAIL is set;
   without SENDGRID_API_KEY the app logs a warning and skips emails (lib/server/email.ts).
+- Firebase `authorizedDomains` now includes `dubsmash.vercel.app` + both alias domains
+  (was causing `auth/unauthorized-domain` on login). Preview-deployment URLs are each unique —
+  add them via Identity Toolkit admin config PATCH if login is needed there.
 - `SUPABASE_URL` (server-only alias) is read before `NEXT_PUBLIC_SUPABASE_URL` — both work.
 
 ## Live infrastructure
