@@ -23,7 +23,7 @@ Specs: `DUBSMASH_FINAL_COMPREHENSIVE_PROMPT.md` (product spec) and
 | Phase | Description | Status |
 |------:|-------------|--------|
 | 0 | Work tracker, AGENTS.md, git init | DONE |
-| 1 | Project init: package.json, Next/TS/Tailwind config, types | TODO |
+| 1 | Project init: package.json, Next/TS/Tailwind config, types | DONE |
 | 2 | DB migrations (11 tables) + seed flags | TODO |
 | 3 | Core services (flags, supabase, auth, cloudinary, realtime, api client, utils, timeline) | TODO |
 | 4 | Auth + admin access control (APIs, middleware, dashboard) | TODO |
@@ -46,6 +46,25 @@ _(Write here what is half-done in the current phase, so the next person can pick
 ## Decisions (deviations / clarifications of the spec)
 
 _(Append-only. Each decision: what, why.)_
+
+1. **Real-time uses Supabase Realtime (broadcast + presence), not a Socket.io server.** Vercel
+   serverless functions cannot hold WebSocket connections, so a Socket.io server there would not work.
+   Supabase Realtime is free, already part of the stack, and gives rooms (channels), broadcast,
+   presence (online status) and automatic reconnection. The event names from the spec are kept
+   (`player:joined`, `player:ready`, `recording:start`, `recording:complete`, `playback:start`) —
+   see `types/game.ts`. Server routes broadcast via the service-role client after DB writes; clients
+   treat events as "something changed" hints and refetch authoritative state from the API.
+2. **Auth: Firebase client SDK signs users in; the API verifies Firebase ID tokens with firebase-admin.**
+   `/api/auth/signup` creates the DB profile (username) for an already-created Firebase user;
+   `/api/auth/login` records the login and returns the profile. Password hashing/JWT expiry are handled
+   by Firebase. `/api/auth/refresh-token` proxies Firebase's secure-token endpoint.
+3. **Uploads go directly from the browser to Cloudinary using a server-generated signature**
+   (`/api/uploads/sign`), then the client registers the asset (`/api/clips/upload`,
+   `/api/recordings/upload`). Vercel functions have a 4.5MB body limit, so proxying 500MB videos
+   through the API is impossible. Server validates resource type, folder and public_id ownership.
+4. **Next.js pages router, code at repo root** (`pages/`, `lib/`, `components/`...) as laid out in the meta prompt.
+5. **Dependencies were installed with `npm install --before=2026-09-25`** so no package version is younger
+   than ~7 days (supply-chain safety).
 
 ## Known gaps / follow-ups
 
