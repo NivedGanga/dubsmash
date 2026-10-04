@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import type { ClipRow, FolderRow } from '@/types/database';
-import { api, errorMessage } from '@/lib/api';
+import { adminPost } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { uploadToCloudinary } from '@/lib/upload';
 import { Modal, ErrorBox } from '@/components/Common/ui';
 
@@ -46,9 +47,12 @@ export function UploadClipModal({
     abort.current = new AbortController();
     try {
       const up = await uploadToCloudinary(file, { kind: 'clip' }, { onProgress: setProgress, signal: abort.current.signal });
-      const { clip } = await api<{ clip: ClipRow }>('/api/clips/upload', {
-        method: 'POST',
-        body: { public_id: up.public_id, title: title.trim(), description: description.trim() || undefined, difficulty, folder_id: folderId || null },
+      const { clip } = await adminPost<{ clip: ClipRow }>('/api/clips/upload', {
+        public_id: up.public_id,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        difficulty,
+        folder_id: folderId || null,
       });
       onUploaded(clip);
       setFile(null);

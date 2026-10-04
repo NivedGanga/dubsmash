@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ZodError, type ZodType } from 'zod';
-import type { UserRow } from '@/types/database';
+import type { AdminAccountRow, UserRow } from '@/types/database';
 import type { ApiErrorBody } from '@/types/api';
 import { allowedOrigins } from './env';
 
@@ -25,15 +25,24 @@ export interface AuthedRequest extends NextApiRequest {
   user: UserRow;
 }
 
+/** Request carrying a resolved admin account (separate from game `user`). */
+export interface AdminAuthedRequest extends NextApiRequest {
+  admin: AdminAccountRow;
+}
+
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Handler<R> = (req: R, res: NextApiResponse) => Promise<unknown> | unknown;
 
-/** Middleware wraps a handler; requireAuth/requireAdmin live in lib/middleware. */
+/** Middleware wraps a handler; requireAuth lives in lib/middleware. */
 export type Middleware = (req: NextApiRequest) => Promise<UserRow | null>;
+/** Admin-portal middleware: resolves an admin_accounts row (see lib/server/adminAuth). */
+export type AdminMiddleware = (req: NextApiRequest) => Promise<AdminAccountRow | null>;
 
 interface HandlerOptions {
-  /** Resolves the user; when provided, handlers receive AuthedRequest. */
+  /** Resolves the game user; when provided, handlers receive AuthedRequest. */
   auth?: Middleware;
+  /** Resolves the admin account; when provided, handlers receive AdminAuthedRequest. */
+  adminAuth?: AdminMiddleware;
 }
 
 function applyCors(req: NextApiRequest, res: NextApiResponse): boolean {
@@ -117,6 +126,11 @@ export function createHandler<R extends NextApiRequest = AuthedRequest>(
         const user = await options.auth(req);
         if (!user) throw unauthorized();
         (req as AuthedRequest).user = user;
+      }
+      if (options.adminAuth) {
+        const admin = await options.adminAuth(req);
+        if (!admin) throw unauthorized();
+        (req as AdminAuthedRequest).admin = admin;
       }
       const result = await fn(req as R, res);
       if (!res.headersSent && !res.writableEnded) {

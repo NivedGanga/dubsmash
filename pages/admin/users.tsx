@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { Paginated } from '@/types/api';
 import type { UserRole, UserRow, UserStatus } from '@/types/database';
-import { api, errorMessage } from '@/lib/api';
+import { adminPatch } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { timeAgo } from '@/lib/utils';
-import { useApi } from '@/hooks/useApi';
-import { useSession } from '@/store/session';
+import { useAdminApi } from '@/hooks/useAdminApi';
 import { toast } from '@/store/toast';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { ErrorBox, Spinner } from '@/components/Common/ui';
@@ -13,16 +13,16 @@ import { ErrorBox, Spinner } from '@/components/Common/ui';
 type AdminUser = Pick<UserRow, 'id' | 'email' | 'username' | 'display_name' | 'role' | 'status' | 'clips_created' | 'games_played' | 'created_at' | 'last_seen_at'>;
 
 export default function AdminUsersPage() {
-  const meId = useSession((s) => s.me?.user.id);
+  
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
-  const { data, error, loading, reload, setData } = useApi<Paginated<AdminUser>>('/api/admin/users', { q: q.trim() || undefined, page });
+  const { data, error, loading, reload, setData } = useAdminApi<Paginated<AdminUser>>('/api/admin/users', { q: q.trim() || undefined, page });
 
   async function update(u: AdminUser, patch: { role?: UserRole; status?: UserStatus }) {
     if (patch.role === 'super_admin' && !window.confirm(`Promote @${u.username} to super admin? They will have full control of the platform.`)) return;
     if (patch.status === 'banned' && !window.confirm(`Ban @${u.username}?`)) return;
     try {
-      await api(`/api/admin/users/${u.id}`, { method: 'PATCH', body: patch });
+      await adminPatch(`/api/admin/users/${u.id}`, patch);
       setData((d) => d && { ...d, items: d.items.map((x) => (x.id === u.id ? { ...x, ...patch } : x)) });
       toast.success('User updated.');
     } catch (err) {
@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
 
   return (
-    <AdminLayout title="Users" requirement="super_admin">
+    <AdminLayout title="Users" requireSuper>
       <input className="input mb-4 max-w-sm" placeholder="Search by username or name" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
       {error && <ErrorBox message={error} onRetry={() => void reload()} />}
       {loading && !data && <Spinner />}
@@ -60,14 +60,14 @@ export default function AdminUsersPage() {
                     <p className="text-xs text-ink-400">{u.email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <select className="input py-1" value={u.role} disabled={u.id === meId} onChange={(e) => void update(u, { role: e.target.value as UserRole })}>
+                    <select className="input py-1" value={u.role} onChange={(e) => void update(u, { role: e.target.value as UserRole })}>
                       <option value="user">user</option>
                       <option value="admin">admin</option>
                       <option value="super_admin">super admin</option>
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <select className="input py-1" value={u.status} disabled={u.id === meId} onChange={(e) => void update(u, { status: e.target.value as UserStatus })}>
+                    <select className="input py-1" value={u.status} onChange={(e) => void update(u, { status: e.target.value as UserStatus })}>
                       <option value="active">active</option>
                       <option value="inactive">inactive</option>
                       <option value="banned">banned</option>

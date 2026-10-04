@@ -1,14 +1,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
-import { useSession } from '@/store/session';
-import { AvatarBadge } from '@/components/Common/AvatarBadge';
-import { NotificationBell } from '@/components/Common/NotificationBell';
-import { signOutEverywhere } from './AppShell';
+import type { PublicAdminAccount } from '@/types/api';
+import { clearAdminToken } from '@/lib/adminSession';
 
-/** Admin portal chrome: separate branding/nav from the game portal, wrapped in .admin-scope styles. */
-export function AdminShell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  const me = useSession((s) => s.me);
+/** Admin portal chrome: separate branding/nav and its own credential session — no game account needed. */
+export function AdminShell({ children, wide = false, account }: { children: ReactNode; wide?: boolean; account?: PublicAdminAccount | null }) {
   const router = useRouter();
   return (
     <div className="admin-scope admin-bg min-h-screen">
@@ -19,24 +16,27 @@ export function AdminShell({ children, wide = false }: { children: ReactNode; wi
             <span className="rounded bg-admin-500/15 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-admin-300">Admin</span>
           </Link>
           <div className="ml-auto flex items-center gap-2">
-            <NotificationBell />
-            <Link href="/game" className="btn-ghost px-2 py-1 text-sm">Game portal →</Link>
-            {me && (
+            {account ? (
               <>
-                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-ink-700" aria-label="Profile">
-                  <AvatarBadge user={me.user} size={28} />
-                  <span className="hidden text-sm font-semibold sm:inline">{me.user.display_name}</span>
-                </Link>
+                <span className="flex items-center gap-2 rounded-lg px-2 py-1">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-admin-500/20 text-sm">🛡️</span>
+                  <span className="hidden text-sm font-semibold sm:inline">{account.display_name}</span>
+                  {account.role === 'super_admin' && (
+                    <span className="rounded bg-admin-500/15 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-admin-300">super</span>
+                  )}
+                </span>
                 <button
                   className="btn-ghost px-2 py-1 text-sm"
-                  onClick={async () => {
-                    await signOutEverywhere();
+                  onClick={() => {
+                    clearAdminToken();
                     void router.push('/admin/login');
                   }}
                 >
                   Log out
                 </button>
               </>
+            ) : (
+              <Link href="/login" className="btn-ghost px-2 py-1 text-sm">Game portal →</Link>
             )}
           </div>
         </nav>

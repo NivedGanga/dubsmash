@@ -5,7 +5,6 @@ import type { SignupResponse } from '@/types/api';
 import { api, errorMessage } from '@/lib/api';
 import { authErrorMessage, signup } from '@/lib/auth';
 import { useSession } from '@/store/session';
-import { setPortal } from '@/lib/portal';
 import { toast } from '@/store/toast';
 import { safeNext } from '@/hooks/useRequireAuth';
 import { usernameHintColor, useUsernameCheck } from '@/hooks/useUsernameCheck';
@@ -28,7 +27,6 @@ function CredentialsStep() {
     setBusy(true);
     try {
       // SessionProvider sees the new Firebase user, finds no profile and moves us to the username step.
-      setPortal('game');
       await signup(email.trim(), password);
     } catch (err) {
       setError(authErrorMessage(err));
@@ -54,7 +52,7 @@ function CredentialsStep() {
       <button className="btn-primary w-full py-3 font-display text-lg uppercase tracking-wider" disabled={busy}>
         {busy ? 'Creating account…' : '▶ Join the party'}
       </button>
-      <SsoButtons onError={setError} portal="game" />
+      <SsoButtons onError={setError} />
     </form>
   );
 }
@@ -70,7 +68,6 @@ function UsernameStep({ onDone }: { onDone: (res: SignupResponse) => void }) {
     setError(null);
     setBusy(true);
     try {
-      setPortal('game');
       const res = await api<SignupResponse>('/api/auth/signup', {
         method: 'POST',
         body: skip ? {} : { username: username.trim(), display_name: displayName.trim() || undefined },
@@ -120,10 +117,7 @@ export default function SignupPage() {
   const next = safeNext(router.query.next);
 
   useEffect(() => {
-    if (status === 'ready') {
-      setPortal('game'); // signing up through the game portal stamps the session
-      void router.replace(next);
-    }
+    if (status === 'ready') void router.replace(next);
   }, [status, next, router]);
 
   return (

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { UserRow } from '@/types/database';
-import { badRequest, createHandler, parseBody, queryParam } from '@/lib/server/handler';
-import { requireSuperAdmin } from '@/lib/middleware/requireAdmin';
+import { badRequest, createHandler, parseBody, queryParam, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireSuperAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { notify } from '@/lib/server/notify';
 
@@ -13,27 +13,26 @@ const schema = z
   .partial()
   .strict();
 
-/** Super admin: change a user's role (incl. promote to super admin) or status. */
-export default createHandler(
+/** Super admin: change a game user's role badge or status (suspend/ban). */
+export default createHandler<AdminAuthedRequest>(
   {
     PATCH: async (req) => {
       const id = queryParam(req, 'id');
       const patch = parseBody(schema, req);
       if (Object.keys(patch).length === 0) throw badRequest('Nothing to update.');
-      if (id === req.user.id) throw badRequest('You cannot change your own role or status.');
       const { data, error } = await supabaseAdmin().from('users').update(patch).eq('id', id).select('*').single();
       if (error) throw error;
       const user = data as UserRow;
-      if (patch.role === 'super_admin' || patch.role === 'admin') {
+      if (patch.status === 'banned') {
         await notify({
           userId: user.id,
-          type: 'access_approved',
-          message: patch.role === 'super_admin' ? 'You were promoted to super admin.' : 'You were granted admin portal access.',
-          metadata: { sender_id: req.user.id },
+          type: 'access_rejected',
+          message: 'Your account has been suspended. Contact support if you think this is a mistake.',
+          metadata: { sender_id: req.admin.id },
         });
       }
       return { user };
     },
   },
-  { auth: requireSuperAdmin },
+  { adminAuth: requireSuperAdminAccount },
 );

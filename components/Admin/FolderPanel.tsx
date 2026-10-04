@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { FolderRow } from '@/types/database';
 import type { FolderTreeResponse } from '@/types/api';
-import { api, errorMessage } from '@/lib/api';
+import { adminDelete, adminPatch, adminPost } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { toast } from '@/store/toast';
 
 export type FolderSelection = 'all' | 'root' | string;
@@ -30,7 +31,7 @@ export function FolderPanel({ tree, selected, onSelect, owner, onOwner, isSuper,
   async function create() {
     if (!name.trim()) return;
     try {
-      await api('/api/folders', { method: 'POST', body: { name: name.trim(), parent_folder_id: parentForNew, owner_id: owner ?? undefined } });
+      await adminPost('/api/folders', { name: name.trim(), parent_folder_id: parentForNew, owner_id: owner ?? undefined });
       setName('');
       setCreating(false);
       onChanged();
@@ -43,7 +44,7 @@ export function FolderPanel({ tree, selected, onSelect, owner, onOwner, isSuper,
     const next = window.prompt('Rename folder', f.name)?.trim();
     if (!next || next === f.name) return;
     try {
-      await api(`/api/folders/${f.id}`, { method: 'PATCH', body: { name: next } });
+      await adminPatch(`/api/folders/${f.id}`, { name: next });
       onChanged();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -53,7 +54,7 @@ export function FolderPanel({ tree, selected, onSelect, owner, onOwner, isSuper,
   async function remove(f: FolderRow) {
     if (!window.confirm(`Delete folder "${f.name}"? Only empty folders can be deleted.`)) return;
     try {
-      await api(`/api/folders/${f.id}`, { method: 'DELETE' });
+      await adminDelete(`/api/folders/${f.id}`);
       if (selected === f.id) onSelect('all');
       onChanged();
     } catch (err) {
@@ -79,10 +80,10 @@ export function FolderPanel({ tree, selected, onSelect, owner, onOwner, isSuper,
     <div className="card space-y-3 p-3">
       {isSuper && (
         <div>
-          <label className="label px-2" htmlFor="owner">User folders</label>
+          <label className="label px-2" htmlFor="owner">Admin folders</label>
           <select id="owner" className="input py-1 text-sm" value={owner ?? ''} onChange={(e) => onOwner(e.target.value || null)}>
             <option value="">Everyone (all clips)</option>
-            {(tree?.owners ?? []).map((o) => <option key={o.id} value={o.id}>@{o.username}</option>)}
+            {(tree?.owners ?? []).map((o) => <option key={o.id} value={o.id}>{o.display_name}</option>)}
           </select>
         </div>
       )}

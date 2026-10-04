@@ -1,21 +1,21 @@
 import { z } from 'zod';
 import type { FolderRow } from '@/types/database';
-import { badRequest, conflict, createHandler, forbidden, notFound, parseBody, queryParam } from '@/lib/server/handler';
-import { requireAdmin } from '@/lib/middleware/requireAdmin';
+import { badRequest, conflict, createHandler, forbidden, notFound, parseBody, queryParam, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
-import type { UserRow } from '@/types/database';
+import type { AdminAccountRow } from '@/types/database';
 
 const patchSchema = z
   .object({ name: z.string().trim().min(1).max(80), parent_folder_id: z.string().uuid().nullable() })
   .partial()
   .strict();
 
-async function getManagedFolder(id: string, user: UserRow): Promise<FolderRow> {
+async function getManagedFolder(id: string, admin: AdminAccountRow): Promise<FolderRow> {
   const { data, error } = await supabaseAdmin().from('folders').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!data) throw notFound('Folder');
   const folder = data as FolderRow;
-  if (folder.owner_id !== user.id && user.role !== 'super_admin') throw forbidden();
+  if (folder.owner_id !== admin.id && admin.role !== 'super_admin') throw forbidden();
   return folder;
 }
 
@@ -30,17 +30,17 @@ async function wouldCycle(folderId: string, candidateParent: string, ownerId: st
   return false;
 }
 
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     /** Rename or move a folder. */
     PATCH: async (req): Promise<{ folder: FolderRow }> => {
-      const folder = await getManagedFolder(queryParam(req, 'id'), req.user);
+      const folder = await getManagedFolder(queryParam(req, 'id'), req.admin);
       const patch = parseBody(patchSchema, req);
       if (Object.keys(patch).length === 0) throw badRequest('Nothing to update.');
       if (patch.parent_folder_id) {
         const { data: parent } = await supabaseAdmin().from('folders').select('owner_id').eq('id', patch.parent_folder_id).maybeSingle();
         if (!parent || parent.owner_id !== folder.owner_id) throw badRequest('Target folder not found.');
-        if (await wouldCycle(folder.id, patch.parent_folder_id, folder.owner_id)) throw badRequest('A folder cannot be moved inside itself.');
+        if (folder.owner_id && (await wouldCycle(folder.id, patch.parent_folder_id, folder.owner_id))) throw badRequest('A folder cannot be moved inside itself.');
       }
       const { data, error } = await supabaseAdmin().from('folders').update(patch).eq('id', folder.id).select('*').single();
       if (error) throw error;
@@ -49,7 +49,7 @@ export default createHandler(
 
     /** Delete an empty folder (no clips, no subfolders). */
     DELETE: async (req) => {
-      const folder = await getManagedFolder(queryParam(req, 'id'), req.user);
+      const folder = await getManagedFolder(queryParam(req, 'id'), req.admin);
       const sb = supabaseAdmin();
       const [{ count: clips }, { count: children }] = await Promise.all([
         sb.from('clips').select('id', { count: 'exact', head: true }).eq('folder_id', folder.id),
@@ -61,5 +61,5 @@ export default createHandler(
       return undefined;
     },
   },
-  { auth: requireAdmin },
+  { adminAuth: requireAdminAccount },
 );

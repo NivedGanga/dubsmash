@@ -13,7 +13,7 @@ import { AvatarBadge } from '@/components/Common/AvatarBadge';
 import { EmptyState, FullPageSpinner } from '@/components/Common/ui';
 
 export default function FriendsPage() {
-  const { me, allowed } = useRequireAuth('user');
+  const { me, allowed } = useRequireAuth();
   const enabled = !!me?.flags.friend_system_enabled;
   const { friends, reload: reloadFriends } = useFriends();
   const requests = useApi<{ requests: FriendRequestEntry[] }>(allowed && enabled ? '/api/friends/requests' : null);

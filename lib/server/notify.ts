@@ -1,4 +1,4 @@
-import type { NotificationRow, NotificationType, UserRow } from '@/types/database';
+import type { NotificationRow, NotificationType } from '@/types/database';
 import { supabaseAdmin } from './supabase';
 import { broadcastUser } from './realtime';
 
@@ -32,18 +32,4 @@ export async function notify(inputs: NotifyInput | NotifyInput[]): Promise<Notif
   return rows;
 }
 
-export async function superAdmins(): Promise<Pick<UserRow, 'id' | 'email' | 'display_name'>[]> {
-  const { data, error } = await supabaseAdmin()
-    .from('users')
-    .select('id, email, display_name')
-    .eq('role', 'super_admin')
-    .eq('status', 'active');
-  if (error) throw error;
-  return data ?? [];
-}
 
-/** Notify every super admin in-app. */
-export async function notifySuperAdmins(type: NotificationType, message: string, metadata: Record<string, unknown> = {}) {
-  const admins = await superAdmins();
-  return notify(admins.map((a) => ({ userId: a.id, type, message, metadata })));
-}

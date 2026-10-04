@@ -1,15 +1,15 @@
 import type { AdminStats } from '@/types/api';
 import type { JobStatus } from '@/types/database';
-import { createHandler } from '@/lib/server/handler';
-import { requireAdmin } from '@/lib/middleware/requireAdmin';
+import { createHandler, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 
 /** Dashboard numbers. Super admins see platform-wide stats; regular admins see their own clips. */
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     GET: async (req): Promise<AdminStats> => {
       const sb = supabaseAdmin();
-      const isSuper = req.user.role === 'super_admin';
+      const isSuper = req.admin.role === 'super_admin';
       const base = (table: string) => sb.from(table).select('id', { count: 'exact', head: true });
       type Query = ReturnType<typeof base>;
       const count = async (table: string, apply: (q: Query) => Query = (q) => q) => {
@@ -17,7 +17,7 @@ export default createHandler(
         if (error) throw error;
         return c ?? 0;
       };
-      const mine = (q: Query) => (isSuper ? q : q.eq('uploaded_by', req.user.id));
+      const mine = (q: Query) => (isSuper ? q : q.eq('uploaded_by', req.admin.id));
       const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
       const statuses: JobStatus[] = ['pending', 'processing', 'completed', 'failed'];
 
@@ -27,7 +27,7 @@ export default createHandler(
           count('clips', (q) => mine(q).eq('status', 'pending')),
           count('clips', (q) => mine(q).eq('status', 'active')),
           isSuper ? count('users') : Promise.resolve(0),
-          isSuper ? count('access_requests', (q) => q.eq('status', 'pending')) : Promise.resolve(0),
+          isSuper ? count('admin_accounts', (q) => q.eq('status', 'pending')) : Promise.resolve(0),
           count('game_sessions', (q) => q.gte('created_at', weekAgo)),
           ...statuses.map((s) => (isSuper ? count('video_processing_queue', (q) => q.eq('status', s)) : Promise.resolve(0))),
         ]);
@@ -43,5 +43,5 @@ export default createHandler(
       };
     },
   },
-  { auth: requireAdmin },
+  { adminAuth: requireAdminAccount },
 );

@@ -28,10 +28,10 @@ try {
   console.info(`✓ ${all.length} SQL files apply cleanly and idempotently`);
 
   const tables = await q(`select count(*)::int as n from information_schema.tables where table_schema = 'public'`);
-  assert.equal(tables[0].n, 11, 'expected 11 tables');
+  assert.equal(tables[0].n, 12, 'expected 12 tables');
   const rls = await q(`select count(*)::int as n from pg_tables where schemaname = 'public' and not rowsecurity`);
   assert.equal(rls[0].n, 0, 'every table must have RLS enabled');
-  console.info('✓ 11 tables, RLS enabled on all');
+  console.info('✓ 12 tables, RLS enabled on all');
 
   const [u1] = await q(`select * from register_user('fb1','A@x.com','alice','Alice','user')`);
   const [u2] = await q(`select * from register_user('fb2','b@x.com','bob','Bob','user')`);
@@ -42,11 +42,20 @@ try {
   await rejects(`select * from register_user('fb4','d@x.com','x y','D','user')`, [], 'invalid username');
   console.info('✓ first user becomes super admin; usernames unique case-insensitively');
 
+  const [a1] = await q(`select * from register_admin_account('Admin@x.com','hash','Root')`);
+  const [a2] = await q(`select * from register_admin_account('mod@x.com','hash','Mod')`);
+  assert.equal(a1.role, 'super_admin');
+  assert.equal(a1.status, 'active');
+  assert.equal(a1.email, 'admin@x.com');
+  assert.equal(a2.role, 'admin');
+  assert.equal(a2.status, 'pending');
+  await rejects(`select * from register_admin_account('ADMIN@x.com','hash','Dup')`, [], 'case-insensitive duplicate admin email');
+  console.info('✓ first admin account becomes active super admin; later signups stay pending');
+
   const [clip] = await q(
     `insert into clips (uploaded_by,title,cloudinary_public_id,original_video_url,duration_seconds) values ($1,'Test','pid','url',20) returning *`,
-    [u1.id],
+    [a1.id],
   );
-  assert.equal((await q(`select clips_created from users where id=$1`, [u1.id]))[0].clips_created, 1);
   const [s] = await q(`insert into game_sessions (clip_id,created_by,players) values ($1,$2,$3) returning *`, [
     clip.id,
     u1.id,

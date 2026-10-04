@@ -65,13 +65,26 @@ _(Write here what is half-done in the current phase, so the next person can pick
 - Firebase `authorizedDomains` now includes `dubsmash.vercel.app` + both alias domains
   (was causing `auth/unauthorized-domain` on login). Preview-deployment URLs are each unique —
   add them via Identity Toolkit admin config PATCH if login is needed there.
-- **Two-portal split with session scoping (user request):** admin portal has its own entry
-  `/admin/login` + `AdminShell` chrome (cyan `admin-*` accent, `.admin-scope` CSS overrides).
-  `lib/portal.ts` stamps `dubsmash_portal` (localStorage) on portal login pages/SsoButtons;
-  `useRequireAuth` enforces it — admin requirements need `portal==='admin'`, game pages reject
-  `portal==='admin'`. Crossing portals shows a "signed in via the other portal" switch card on
-  the login page (explicit user choice; roles still gate admin_access). Logout clears the stamp.
-  Game nav shows the Admin link only when `admin_access.status === 'granted'`.
+- **Fully separate portal authentication (user request, supersedes the earlier portal-scoping
+  approach):** the admin portal no longer uses Firebase/game accounts at all. `admin_accounts`
+  (migration 009) holds its own credentials — email + bcrypt password (`bcryptjs`), role
+  (`admin`/`super_admin`) and status (`pending`/`active`/`rejected`/`banned`). Login issues a
+  signed `Admin <jwt>` session token (jose HS256, `ADMIN_SESSION_SECRET`, 12h) stored in
+  `localStorage.dubsmash_admin_token`. First admin account ever = active super_admin; later
+  signups stay `pending` until approved at `/admin/accounts` (super-only). A game user can
+  NEVER reach the admin portal — they must register separately at `/admin/signup`.
+  Server: `lib/server/adminAuth.ts` (`requireAdminAccount`/`requireSuperAdminAccount` used via
+  createHandler's new `adminAuth` option; `AdminAuthedRequest` carries `req.admin`).
+  Client: `lib/adminSession.ts` + `lib/adminApi.ts` + `hooks/useRequireAdmin.ts` +
+  `hooks/useAdminApi.ts` + `AdminMeContext`. `pages/api/clips/[id]` + `sequences` are dual-auth
+  (`Admin` header → admin account; `Bearer` → game user) since players read clips and admins
+  manage them. `pages/api/uploads/sign` likewise: clip→Admin token, recording→Firebase token.
+  `lib/portal.ts` + the old requireAdmin middleware + the whole access-requests flow were
+  deleted (replaced by `admin_accounts.status`). Admin notifications are emails
+  (`lib/server/adminNotify.ts`) since admins aren't game users. Game portal shows zero admin
+  controls (no Admin navlink, no admin hints on /login).
+- **users.role / admin_access in MeResponse are now vestigial** — they no longer grant anything;
+  admin portal access is decided purely by `admin_accounts`. Left in place for display.
 - **Game portal = Fall Guys theme (user request):** `Titan One` display font (`_document.tsx`),
   saturated purple candy `.game-bg`, `.wordmark` white+pink/cyan offset shadows, `fg-*` candy
   palette (pink/cyan/yellow/purple/green), chunky rounded-full push-buttons with offset shadows
@@ -92,6 +105,8 @@ _(Write here what is half-done in the current phase, so the next person can pick
 | SendGrid | Optional; `SENDGRID_FROM_EMAIL` set, `SENDGRID_API_KEY` unset — code skips email gracefully | — |
 
 DB state: migrations 001–008 applied via Supabase MCP `apply_migration`; 7 feature flags seeded.
+Migration 009 (admin_accounts) is committed and validated — apply it via Supabase MCP when the
+connection recovers (it was intermittently failing; admin APIs 500 until the table exists).
 Advisor lints: `rls_enabled_no_policy` is intentional (all access via service role); the
 `function_search_path_mutable` and `unindexed_foreign_keys` findings were fixed by migration 008.
 Note: Vercel `ssoProtection` is ON for non-custom-domain deployments — visitors to the *.vercel.app
@@ -194,15 +209,23 @@ _(Append-only. Each decision: what, why.)_
     earlier version skipped lines that had an *uploaded but unconfirmed* take.
 33. **Broadcast payloads are untrusted** (public channels): clients only refetch on events; the
     `playback:start` delay is clamped to 0.1-10s.
+34. **Admin portal has its own credential store (`admin_accounts`), not Firebase + users.role.**
+    The user asked for truly separate portals: a game signup must never allow admin sign-in. One
+    Firebase project can't host two independent password account types, so admins get email +
+    bcrypt (bcryptjs) credentials verified server-side, and a 12h jose-HS256 token (sent as
+    `Authorization: Admin …`) instead of a Firebase session. First account = active super_admin;
+    later signups stay pending until approved. `clips.uploaded_by/approved_by`, `folders.owner_id`,
+    `flag_change_log.changed_by`, `access_requests.responded_by` were repointed to admin_accounts
+    (migration 009); the game-side access-request flow was deleted (admins are approved via
+    `/admin/accounts`). users.role remains as a cosmetic badge only.
 
 ## Known gaps / follow-ups
 
 _(Things intentionally left for later, or blocked on credentials. Mirrored in HANDOFF.md.)_
 
-- Supabase is live with all migrations; GitHub + Vercel are provisioned and the first deploy is
-  building. Still missing real Firebase credentials, the Supabase service-role key and the
-  Cloudinary API secret, so auth/uploads/video-rendering are untested end-to-end. See In-progress
-  notes for the exact values needed.
+- Migration 009 (admin_accounts) must be applied to the live DB before the admin portal works —
+  Supabase MCP was intermittently failing at commit time; apply `migrations/009_admin_accounts.sql`
+  via `apply_migration` once the connection recovers.
 - Next.js 14 has upstream advisories fixed only in 15+; upgrade recommended.
 - Realtime channels are public (hardening: Supabase third-party auth with Firebase + private channels).
 - No API rate limiting; no email-verification requirement; no i18n; no Sentry/analytics.

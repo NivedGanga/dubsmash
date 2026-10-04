@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { AdminStats } from '@/types/api';
-import { useApi } from '@/hooks/useApi';
-import { useSession } from '@/store/session';
+import { useAdminApi } from '@/hooks/useAdminApi';
+import { useAdminMe } from '@/hooks/useRequireAdmin';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { ErrorBox, Spinner } from '@/components/Common/ui';
 
@@ -16,9 +16,9 @@ function Stat({ label, value, href }: { label: string; value: number | string; h
 }
 
 export default function AdminDashboard() {
-  const me = useSession((s) => s.me);
-  const isSuper = me?.user.role === 'super_admin';
-  const { data, error, loading, reload } = useApi<AdminStats>(me ? '/api/admin/stats' : null);
+  const { data, error, loading, reload } = useAdminApi<AdminStats>('/api/admin/stats');
+  const me = useAdminMe();
+  const isSuper = me?.account.role === 'super_admin';
 
   return (
     <AdminLayout title="Dashboard">
@@ -34,7 +34,7 @@ export default function AdminDashboard() {
           {isSuper && (
             <div className="grid gap-4 sm:grid-cols-3">
               <Stat label="Users" value={data.total_users} href="/admin/users" />
-              <Stat label="Access requests" value={data.pending_access_requests} href="/admin/access-requests" />
+              <Stat label="Pending admins" value={data.pending_access_requests} href="/admin/accounts" />
               <Stat label="Games (7 days)" value={data.sessions_last_7_days} />
             </div>
           )}

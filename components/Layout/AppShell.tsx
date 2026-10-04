@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { logout } from '@/lib/auth';
-import { clearPortal } from '@/lib/portal';
 import { useSession } from '@/store/session';
 import { AvatarBadge } from '@/components/Common/AvatarBadge';
 
@@ -19,7 +18,6 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
 
 export async function signOutEverywhere(): Promise<void> {
   await api('/api/auth/logout', { method: 'POST', body: {} }).catch(() => {});
-  clearPortal();
   await logout();
 }
 
@@ -39,7 +37,6 @@ export function AppShell({ children, wide = false, bell }: { children: ReactNode
             <>
               <NavLink href="/game">Play</NavLink>
               {me.flags.friend_system_enabled && <NavLink href="/friends">Friends</NavLink>}
-              {me.admin_access.status === 'granted' && <NavLink href="/admin">Admin</NavLink>}
               <div className="ml-auto flex items-center gap-2">
                 {bell}
                 <NavLink href="/settings">Settings</NavLink>

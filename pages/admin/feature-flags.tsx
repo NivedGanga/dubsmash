@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { FeatureFlagRow, FlagChangeLogRow, FlagValue } from '@/types/database';
-import { api, errorMessage } from '@/lib/api';
+import { adminPatch } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { timeAgo } from '@/lib/utils';
-import { useApi } from '@/hooks/useApi';
+import { useAdminApi } from '@/hooks/useAdminApi';
 import { toast } from '@/store/toast';
-import { refreshMe } from '@/components/Common/SessionProvider';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { ErrorBox, Spinner, Toggle } from '@/components/Common/ui';
 
-type HistoryRow = FlagChangeLogRow & { changed_by_user: { username: string } | null };
+type HistoryRow = FlagChangeLogRow & { changed_by_admin: { display_name: string } | null };
 
 function describeChange(h: HistoryRow): string {
   const parts: string[] = [];
@@ -36,10 +36,9 @@ function FlagCard({ flag, onSaved }: { flag: FeatureFlagRow; onSaved: (f: Featur
     if (!confirm) return;
     setBusy(true);
     try {
-      const res = await api<{ flag: FeatureFlagRow }>(`/api/admin/feature-flags/${flag.flag_name}/toggle`, { method: 'PATCH', body: { enabled, confirm: flag.is_critical } });
+      const res = await adminPatch<{ flag: FeatureFlagRow }>(`/api/admin/feature-flags/${flag.flag_name}/toggle`, { enabled, confirm: flag.is_critical });
       onSaved(res.flag);
       toast.success(`${flag.flag_name} ${enabled ? 'enabled' : 'disabled'}.`);
-      void refreshMe();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -50,10 +49,9 @@ function FlagCard({ flag, onSaved }: { flag: FeatureFlagRow; onSaved: (f: Featur
   async function saveValue(value: FlagValue) {
     setBusy(true);
     try {
-      const res = await api<{ flag: FeatureFlagRow }>(`/api/admin/feature-flags/${flag.flag_name}/value`, { method: 'PATCH', body: { flag_value: value } });
+      const res = await adminPatch<{ flag: FeatureFlagRow }>(`/api/admin/feature-flags/${flag.flag_name}/value`, { flag_value: value });
       onSaved(res.flag);
       toast.success('Saved.');
-      void refreshMe();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -105,10 +103,10 @@ function FlagCard({ flag, onSaved }: { flag: FeatureFlagRow; onSaved: (f: Featur
 }
 
 export default function FeatureFlagsPage() {
-  const { data, error, loading, reload, setData } = useApi<{ flags: FeatureFlagRow[]; history: HistoryRow[] }>('/api/admin/feature-flags');
+  const { data, error, loading, reload, setData } = useAdminApi<{ flags: FeatureFlagRow[]; history: HistoryRow[] }>('/api/admin/feature-flags');
 
   return (
-    <AdminLayout title="Feature flags" requirement="super_admin">
+    <AdminLayout title="Feature flags" requireSuper>
       <p className="mb-6 max-w-2xl text-sm text-ink-200">
         Flags change behaviour at runtime without a deploy. Changes apply immediately on this server and within 5 minutes everywhere else.
       </p>
@@ -137,7 +135,7 @@ export default function FeatureFlagsPage() {
                   <p className="font-mono text-xs font-bold">{h.flag_name}</p>
                   <p>{describeChange(h)}</p>
                   <p className="text-xs text-ink-400">
-                    {h.changed_by_user ? `@${h.changed_by_user.username}` : 'system'} · {timeAgo(h.changed_at)} · {new Date(h.changed_at).toLocaleString()}
+                    {h.changed_by_admin ? h.changed_by_admin.display_name : 'system'} · {timeAgo(h.changed_at)} · {new Date(h.changed_at).toLocaleString()}
                   </p>
                 </li>
               ))}

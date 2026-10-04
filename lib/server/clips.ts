@@ -1,4 +1,4 @@
-import type { ClipRow, UserRow } from '@/types/database';
+import type { AdminAccountRow, ClipRow } from '@/types/database';
 import { forbidden, notFound } from './handler';
 import { supabaseAdmin } from './supabase';
 import { trimmedVideoUrl } from './cloudinary';
@@ -9,14 +9,14 @@ export async function getClip(id: string): Promise<ClipRow | null> {
   return data as ClipRow | null;
 }
 
-export const canManageClip = (clip: Pick<ClipRow, 'uploaded_by'>, user: Pick<UserRow, 'id' | 'role'>) =>
-  user.role === 'super_admin' || clip.uploaded_by === user.id;
+export const canManageClip = (clip: Pick<ClipRow, 'uploaded_by'>, admin: Pick<AdminAccountRow, 'id' | 'role'>) =>
+  admin.role === 'super_admin' || clip.uploaded_by === admin.id;
 
-/** Load a clip the user may manage (owner or super admin), else 404/403. */
-export async function getManagedClip(id: string, user: UserRow): Promise<ClipRow> {
+/** Load a clip the admin may manage (owner or super admin), else 404/403. */
+export async function getManagedClip(id: string, admin: Pick<AdminAccountRow, 'id' | 'role'>): Promise<ClipRow> {
   const clip = await getClip(id);
   if (!clip) throw notFound('Clip');
-  if (!canManageClip(clip, user)) throw forbidden('You can only manage your own clips.');
+  if (!canManageClip(clip, admin)) throw forbidden('You can only manage your own clips.');
   return clip;
 }
 

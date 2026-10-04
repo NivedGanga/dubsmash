@@ -37,7 +37,7 @@ function ClipTile({ clip, onPick }: { clip: PlayableClip; onPick: () => void }) 
 }
 
 export default function GamePage() {
-  const { me, allowed } = useRequireAuth('user');
+  const { me, allowed } = useRequireAuth();
   const { friends, onlineCount, enabled: friendsEnabled } = useFriends();
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');

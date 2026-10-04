@@ -5,6 +5,7 @@
  */
 import type { UploadSignatureResponse } from '@/types/api';
 import { api } from './api';
+import { adminApi } from './adminApi';
 
 const CHUNK_SIZE = 20 * 1024 * 1024;
 const MAX_CHUNK_RETRIES = 3;
@@ -69,7 +70,9 @@ export async function uploadToCloudinary(
   kind: UploadKind,
   opts: { fileName?: string; onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
 ): Promise<UploadResult> {
-  const sig = await api<UploadSignatureResponse>('/api/uploads/sign', { method: 'POST', body: kind });
+  // Clip uploads are admin-portal work (Admin token); game recordings use the Firebase token.
+  const signer = kind.kind === 'clip' ? adminApi : api;
+  const sig = await signer<UploadSignatureResponse>('/api/uploads/sign', { method: 'POST', body: kind });
   const name = opts.fileName ?? (file instanceof File ? file.name : 'upload');
   const total = file.size;
   const report = (loaded: number) => opts.onProgress?.(Math.min(1, loaded / Math.max(1, total)));

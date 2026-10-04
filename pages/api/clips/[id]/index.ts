@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import type { ClipRow } from '@/types/database';
-import { badRequest, conflict, createHandler, forbidden, notFound, parseBody, queryParam } from '@/lib/server/handler';
+import { badRequest, conflict, createHandler, notFound, parseBody, queryParam, unauthorized } from '@/lib/server/handler';
 import { requireAuth } from '@/lib/middleware/requireAuth';
+import { adminToken, requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { canManageClip, clipVideoUrl, getClip, getManagedClip, hasLiveSessions, normaliseClip } from '@/lib/server/clips';
 import { deleteAsset } from '@/lib/server/cloudinary';
-import { hasAdminAccess } from '@/lib/server/users';
 
 const patchSchema = z
   .object({
@@ -18,13 +18,22 @@ const patchSchema = z
   .partial()
   .strict();
 
+/** Admins sign in with an `Admin` token; anything else falls back to the game Firebase session. */
+async function adminOrNull(req: Parameters<typeof requireAuth>[0]) {
+  const token = adminToken(req);
+  if (!token) return null;
+  return requireAdminAccount(req);
+}
+
 export default createHandler(
   {
-    /** Managers (owner/super admin) get everything; players only see active clips without the timeline. */
+    /** Managing admins (owner/super) get everything; players only see active clips without the timeline. */
     GET: async (req): Promise<{ clip: ClipRow & { video_url: string }; can_manage: boolean }> => {
       const clip = await getClip(queryParam(req, 'id'));
       if (!clip) throw notFound('Clip');
-      const manage = canManageClip(clip, req.user) && (await hasAdminAccess(req.user));
+      const admin = await adminOrNull(req);
+      const manage = !!admin && canManageClip(clip, admin);
+      if (!admin) await requireAuth(req); // players still need a game session
       if (!manage && clip.status !== 'active') throw notFound('Clip');
       const normalised = normaliseClip(clip);
       return {
@@ -33,10 +42,11 @@ export default createHandler(
       };
     },
 
-    /** Rename, describe, move between folders, set difficulty, archive/unarchive. */
+    /** Admin only: rename, describe, move between folders, set difficulty, archive/unarchive. */
     PATCH: async (req): Promise<{ clip: ClipRow }> => {
-      if (!(await hasAdminAccess(req.user))) throw forbidden();
-      const clip = await getManagedClip(queryParam(req, 'id'), req.user);
+      const admin = await adminOrNull(req);
+      if (!admin) throw unauthorized('Admin sign-in required.');
+      const clip = await getManagedClip(queryParam(req, 'id'), admin);
       const { archived, ...rest } = parseBody(patchSchema, req);
       const patch: Record<string, unknown> = { ...rest };
       if (rest.folder_id) {
@@ -53,9 +63,11 @@ export default createHandler(
       return { clip: normaliseClip(data as ClipRow) };
     },
 
+    /** Admin only: delete a clip and its Cloudinary asset. */
     DELETE: async (req) => {
-      if (!(await hasAdminAccess(req.user))) throw forbidden();
-      const clip = await getManagedClip(queryParam(req, 'id'), req.user);
+      const admin = await adminOrNull(req);
+      if (!admin) throw unauthorized('Admin sign-in required.');
+      const clip = await getManagedClip(queryParam(req, 'id'), admin);
       if (await hasLiveSessions(clip.id)) throw conflict('This clip is being played right now. Try again later.');
       const { error } = await supabaseAdmin().from('clips').delete().eq('id', clip.id);
       if (error) throw error;
@@ -63,5 +75,4 @@ export default createHandler(
       return undefined;
     },
   },
-  { auth: requireAuth },
 );

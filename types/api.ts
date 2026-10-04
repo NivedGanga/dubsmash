@@ -1,5 +1,6 @@
 import type {
   AccessRequestRow,
+  AdminAccountRow,
   ClipRow,
   FeatureFlagRow,
   FlagChangeLogRow,
@@ -63,7 +64,8 @@ export interface UploadSignatureResponse {
 }
 
 export interface ClipWithOwner extends ClipRow {
-  owner?: Pick<UserRow, 'id' | 'username' | 'display_name'>;
+  /** Owning admin account (clips are uploaded by admins, not players). */
+  owner?: Pick<AdminAccountRow, 'id' | 'display_name'>;
 }
 
 export interface ClipListResponse extends Paginated<ClipWithOwner> {}
@@ -81,7 +83,8 @@ export interface ClipSequencesResponse {
 
 export interface FolderTreeResponse {
   folders: FolderRow[];
-  owners?: Array<Pick<UserRow, 'id' | 'username' | 'display_name'>>;
+  /** Admin accounts that can own folders (super admin's per-admin view). */
+  owners?: Array<Pick<AdminAccountRow, 'id' | 'display_name'>>;
 }
 
 export interface SessionDetails {
@@ -128,6 +131,20 @@ export interface FeatureFlagWithHistory extends FeatureFlagRow {
 
 export interface AccessRequestWithUser extends AccessRequestRow {
   user: Pick<UserRow, 'id' | 'username' | 'display_name' | 'email'>;
+}
+
+/** Admin-portal account (never includes password_hash). */
+export type PublicAdminAccount = Pick<AdminAccountRow, 'id' | 'email' | 'display_name' | 'role' | 'status' | 'created_at'>;
+
+export interface AdminAuthResponse {
+  account: PublicAdminAccount;
+  /** Present when the account is active; absent for pending signups. */
+  token?: string;
+}
+
+export interface AdminMeResponse {
+  account: PublicAdminAccount;
+  flags: EvaluatedFlags;
 }
 
 export interface AdminStats {

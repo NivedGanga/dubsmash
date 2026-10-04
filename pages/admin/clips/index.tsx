@@ -3,10 +3,11 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import type { ClipListResponse, ClipWithOwner, FolderTreeResponse } from '@/types/api';
 import type { ClipStatus } from '@/types/database';
-import { api, errorMessage } from '@/lib/api';
+import { adminDelete, adminPatch } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { formatDuration, timeAgo } from '@/lib/utils';
-import { useApi } from '@/hooks/useApi';
-import { useSession } from '@/store/session';
+import { useAdminApi } from '@/hooks/useAdminApi';
+import { useAdminMe } from '@/hooks/useRequireAdmin';
 import { toast } from '@/store/toast';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { EmptyState, ErrorBox, Spinner, StatusBadge } from '@/components/Common/ui';
@@ -18,7 +19,7 @@ type Sort = 'newest' | 'oldest' | 'most_used' | 'alphabetical';
 function ClipCard({ clip, folders, onChanged, showOwner }: { clip: ClipWithOwner; folders: FolderTreeResponse['folders']; onChanged: () => void; showOwner: boolean }) {
   async function patch(body: Record<string, unknown>, ok: string) {
     try {
-      await api(`/api/clips/${clip.id}`, { method: 'PATCH', body });
+      await adminPatch(`/api/clips/${clip.id}`, body);
       toast.success(ok);
       onChanged();
     } catch (err) {
@@ -28,7 +29,7 @@ function ClipCard({ clip, folders, onChanged, showOwner }: { clip: ClipWithOwner
   async function remove() {
     if (!window.confirm(`Delete "${clip.title}" permanently?`)) return;
     try {
-      await api(`/api/clips/${clip.id}`, { method: 'DELETE' });
+      await adminDelete(`/api/clips/${clip.id}`);
       toast.success('Clip deleted.');
       onChanged();
     } catch (err) {
@@ -50,7 +51,7 @@ function ClipCard({ clip, folders, onChanged, showOwner }: { clip: ClipWithOwner
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold" title={clip.title}>{clip.title}</p>
           <p className="text-xs text-ink-400">
-            {showOwner && clip.owner ? `@${clip.owner.username} · ` : ''}
+            {showOwner && clip.owner ? `${clip.owner.display_name} · ` : ''}
             {timeAgo(clip.created_at)} · played {clip.times_played}×
           </p>
         </div>
@@ -89,8 +90,8 @@ function ClipCard({ clip, folders, onChanged, showOwner }: { clip: ClipWithOwner
 
 export default function AdminClipsPage() {
   const router = useRouter();
-  const me = useSession((s) => s.me);
-  const isSuper = me?.user.role === 'super_admin';
+  const me = useAdminMe();
+  const isSuper = me?.account.role === 'super_admin';
   const approvalFlow = !!me?.flags.clip_approval_workflow;
 
   const [q, setQ] = useState('');
@@ -118,8 +119,8 @@ export default function AdminClipsPage() {
 
   useEffect(() => setPage(1), [debouncedQ, status, chars, sort, folder, owner, queue]);
 
-  const tree = useApi<FolderTreeResponse>(me ? '/api/folders' : null, { owner: owner ?? undefined });
-  const clips = useApi<ClipListResponse>(me ? '/api/clips' : null, {
+  const tree = useAdminApi<FolderTreeResponse>('/api/folders', { owner: owner ?? undefined });
+  const clips = useAdminApi<ClipListResponse>('/api/clips', {
     q: debouncedQ || undefined,
     status: queue ? undefined : status || undefined,
     queue: queue ? 'approval' : undefined,
@@ -202,7 +203,7 @@ export default function AdminClipsPage() {
       <UploadClipModal
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        folders={(tree.data?.folders ?? []).filter((f) => f.owner_id === me?.user.id)}
+        folders={(tree.data?.folders ?? []).filter((f) => f.owner_id === me?.account.id)}
         defaultFolderId={folder !== 'all' && folder !== 'root' ? folder : null}
         onUploaded={(clip) => {
           setUploadOpen(false);

@@ -110,7 +110,7 @@ function MicrophoneTest() {
 }
 
 export default function SettingsPage() {
-  const { allowed } = useRequireAuth('user');
+  const { allowed } = useRequireAuth();
   const s = useSettings();
   if (!allowed) return <Shell><FullPageSpinner /></Shell>;
   return (

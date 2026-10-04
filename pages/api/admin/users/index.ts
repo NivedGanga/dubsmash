@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { UserRow } from '@/types/database';
 import type { Paginated } from '@/types/api';
 import { createHandler, parseQuery } from '@/lib/server/handler';
-import { requireSuperAdmin } from '@/lib/middleware/requireAdmin';
+import { requireSuperAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { escapeLike, pageRange, paginationSchema } from '@/lib/server/validation';
 
@@ -31,5 +31,5 @@ export default createHandler(
       return { items: (data ?? []) as AdminUser[], page, page_size, total: count ?? 0 };
     },
   },
-  { auth: requireSuperAdmin },
+  { adminAuth: requireSuperAdminAccount },
 );

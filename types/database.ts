@@ -31,6 +31,21 @@ export interface UserRow {
   updated_at: ISODate;
 }
 
+export type AdminRole = 'admin' | 'super_admin';
+export type AdminAccountStatus = 'pending' | 'active' | 'rejected' | 'banned';
+
+/** Separate admin-portal identity — independent of game users/Firebase. */
+export interface AdminAccountRow {
+  id: UUID;
+  email: string;
+  password_hash: string;
+  display_name: string;
+  role: AdminRole;
+  status: AdminAccountStatus;
+  created_at: ISODate;
+  updated_at: ISODate;
+}
+
 export type AccessRequestStatus = 'pending' | 'approved' | 'rejected';
 
 export interface AccessRequestRow {
@@ -46,7 +61,7 @@ export interface AccessRequestRow {
 
 export interface FolderRow {
   id: UUID;
-  owner_id: UUID;
+  owner_id: UUID | null; // references admin_accounts.id
   name: string;
   parent_folder_id: UUID | null;
   created_at: ISODate;
@@ -75,7 +90,7 @@ export interface TimelineSection {
 
 export interface ClipRow {
   id: UUID;
-  uploaded_by: UUID;
+  uploaded_by: UUID | null; // references admin_accounts.id
   folder_id: UUID | null;
   title: string;
   description: string | null;

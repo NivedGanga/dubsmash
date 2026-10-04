@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { FeatureFlagRow } from '@/types/database';
-import { ApiError, createHandler, notFound, parseBody, queryParam } from '@/lib/server/handler';
-import { requireSuperAdmin } from '@/lib/middleware/requireAdmin';
+import { ApiError, createHandler, notFound, parseBody, queryParam, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireSuperAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseFlagStore, toggleFlag } from '@/lib/server/featureFlags';
 
 const schema = z.object({
@@ -11,7 +11,7 @@ const schema = z.object({
 });
 
 /** Enable/disable a flag. Takes effect immediately (cache cleared) and is audit-logged. */
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     PATCH: async (req): Promise<{ flag: FeatureFlagRow }> => {
       const name = queryParam(req, 'flagName');
@@ -19,8 +19,8 @@ export default createHandler(
       const flag = await supabaseFlagStore.get(name);
       if (!flag) throw notFound('Flag');
       if (flag.is_critical && !confirm) throw new ApiError(428, 'confirmation_required', `"${name}" is a critical flag. Confirm to change it.`);
-      return { flag: await toggleFlag(name, enabled, req.user.id) };
+      return { flag: await toggleFlag(name, enabled, req.admin.id) };
     },
   },
-  { auth: requireSuperAdmin },
+  { adminAuth: requireSuperAdminAccount },
 );

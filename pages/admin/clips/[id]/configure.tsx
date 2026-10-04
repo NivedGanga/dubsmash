@@ -2,11 +2,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipCharacter, ClipRow, TimelineSection } from '@/types/database';
-import { api, errorMessage } from '@/lib/api';
+import { adminPatch, adminPut } from '@/lib/adminApi';
+import { errorMessage } from '@/lib/api';
 import { createTimeline, fitToDuration, removeCharacterFromTimeline, validateTimeline } from '@/lib/timeline';
 import { formatDuration, round2 } from '@/lib/utils';
-import { useApi } from '@/hooks/useApi';
-import { useSession } from '@/store/session';
+import { useAdminApi } from '@/hooks/useAdminApi';
+import { useAdminMe } from '@/hooks/useRequireAdmin';
 import { toast } from '@/store/toast';
 import { AdminLayout } from '@/components/Layout/AdminLayout';
 import { ErrorBox, FullPageSpinner, Modal, StatusBadge } from '@/components/Common/ui';
@@ -19,9 +20,10 @@ type ClipResponse = { clip: ClipRow & { video_url: string }; can_manage: boolean
 export default function ConfigureClipPage() {
   const router = useRouter();
   const id = typeof router.query.id === 'string' ? router.query.id : null;
-  const me = useSession((s) => s.me);
-  const isSuper = me?.user.role === 'super_admin';
-  const { data, error, reload } = useApi<ClipResponse>(id && me ? `/api/clips/${id}` : null);
+  
+  const me = useAdminMe();
+  const isSuper = me?.account.role === 'super_admin';
+  const { data, error, reload } = useAdminApi<ClipResponse>(id ? `/api/clips/${id}` : null);
   const clip = data?.clip;
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -108,14 +110,11 @@ export default function ConfigureClipPage() {
     if (!sections || !validation?.valid) return;
     setSaving(true);
     try {
-      const res = await api<{ clip: ClipRow; requires_approval: boolean }>(`/api/clips/${clip!.id}/configure`, {
-        method: 'PUT',
-        body: {
-          trim_start: trim[0],
-          trim_end: trim[1] >= clip!.duration_seconds - 0.01 ? null : trim[1],
-          characters: characters.map((c) => ({ ...c, name: c.name.trim() || c.id })),
-          timeline: sections,
-        },
+      const res = await adminPut<{ clip: ClipRow; requires_approval: boolean }>(`/api/clips/${clip!.id}/configure`, {
+        trim_start: trim[0],
+        trim_end: trim[1] >= clip!.duration_seconds - 0.01 ? null : trim[1],
+        characters: characters.map((c) => ({ ...c, name: c.name.trim() || c.id })),
+        timeline: sections,
       });
       setDirty(false);
       toast.success(res.requires_approval ? 'Saved! Sent to the super admin for approval.' : 'Saved! The clip is live.');
@@ -129,7 +128,7 @@ export default function ConfigureClipPage() {
 
   async function moderate(action: 'approve' | 'reject') {
     try {
-      await api(`/api/clips/${clip!.id}/${action}`, { method: 'PATCH', body: action === 'reject' ? { reason: rejectReason.trim() || undefined } : {} });
+      await adminPatch(`/api/clips/${clip!.id}/${action}`, action === 'reject' ? { reason: rejectReason.trim() || undefined } : {});
       toast.success(action === 'approve' ? 'Clip approved and live.' : 'Clip sent back for changes.');
       setRejectOpen(false);
       await reload();

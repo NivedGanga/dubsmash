@@ -2,9 +2,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import type { MeResponse } from '@/types/api';
 import { useSession, type SessionStatus } from '@/store/session';
-import { getPortal } from '@/lib/portal';
-
-export type AuthRequirement = 'user' | 'admin' | 'super_admin';
 
 export interface RequireAuthResult {
   me: MeResponse | null;
@@ -14,37 +11,22 @@ export interface RequireAuthResult {
 }
 
 /**
- * Page guard. Redirects signed-out users to /login, users without a username to /signup, and users
- * lacking admin access to /admin/request-access. The API enforces the same rules server-side.
+ * Game-portal page guard. Redirects signed-out users to /login and users without a username to
+ * /signup. The admin portal has its own guard (useRequireAdmin) and credential store.
  */
-export function useRequireAuth(requirement: AuthRequirement = 'user'): RequireAuthResult {
+export function useRequireAuth(): RequireAuthResult {
   const router = useRouter();
   const { me, status } = useSession();
 
-  const hasAdmin = me?.admin_access.status === 'granted';
-  const isSuper = me?.user.role === 'super_admin';
-  const portal = status === 'ready' ? getPortal() : null;
-  // Sessions are portal-scoped: an admin-portal session can't open game pages and vice versa.
-  const portalOk = requirement === 'user' ? portal !== 'admin' : portal === 'admin';
-  const allowed =
-    status === 'ready' && !!me && portalOk && (requirement === 'user' || (requirement === 'admin' && hasAdmin) || (requirement === 'super_admin' && isSuper));
+  const allowed = status === 'ready' && !!me;
 
   useEffect(() => {
     if (!router.isReady) return;
     const next = encodeURIComponent(router.asPath);
-    const loginPage = requirement === 'user' ? '/login' : '/admin/login';
     if (status === 'unconfigured') void router.replace('/'); // landing page explains missing config
-    else if (status === 'signed_out') void router.replace(`${loginPage}?next=${next}`);
+    else if (status === 'signed_out') void router.replace(`/login?next=${next}`);
     else if (status === 'needs_profile') void router.replace(`/signup?step=username&next=${next}`);
-    else if (status === 'ready' && me) {
-      if (!portalOk) {
-        void router.replace(`${loginPage}?next=${next}`);
-        return;
-      }
-      if (requirement === 'admin' && !hasAdmin) void router.replace('/admin/request-access');
-      if (requirement === 'super_admin' && !isSuper) void router.replace(hasAdmin ? '/admin/dashboard' : '/admin/request-access');
-    }
-  }, [status, me, requirement, hasAdmin, isSuper, router]);
+  }, [status, me, router]);
 
   return { me, status, allowed };
 }

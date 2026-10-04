@@ -61,7 +61,7 @@ function WaitingForTurn({ details, lastEvent }: { details: SessionDetails; lastE
 export default function PlayPage() {
   const router = useRouter();
   const sessionId = typeof router.query.sessionId === 'string' ? router.query.sessionId : null;
-  const { me, allowed } = useRequireAuth('user');
+  const { me, allowed } = useRequireAuth();
   const { details, error, connection, lastEvent, refresh } = useGameSession(allowed ? sessionId : null);
   const { status: processing, eta } = useVideoProcessing(details && (details.session.state === 'playback' || details.session.state === 'completed') ? sessionId : null, lastEvent);
   const [joining, setJoining] = useState(false);

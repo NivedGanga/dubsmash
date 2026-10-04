@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { ClipListResponse, ClipWithOwner } from '@/types/api';
-import { createHandler, forbidden, parseQuery } from '@/lib/server/handler';
-import { requireAdmin } from '@/lib/middleware/requireAdmin';
+import { createHandler, forbidden, parseQuery, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { normaliseClip } from '@/lib/server/clips';
 import { pageRange, paginationSchema } from '@/lib/server/validation';
@@ -32,23 +32,23 @@ const SORTS = {
  * Admin clip library. Regular admins see only their own clips; super admins see everything
  * (optionally scoped to one owner: the "each username is a folder" view).
  */
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     GET: async (req): Promise<ClipListResponse> => {
       const f = parseQuery(schema, req);
-      const isSuper = req.user.role === 'super_admin';
-      if (f.owner && !isSuper && f.owner !== req.user.id) throw forbidden("You can only view your own clips.");
+      const isSuper = req.admin.role === 'super_admin';
+      if (f.owner && !isSuper && f.owner !== req.admin.id) throw forbidden("You can only view your own clips.");
       const [from, to] = pageRange(f.page, f.page_size);
       const [col, asc] = SORTS[f.sort];
 
       let q = supabaseAdmin()
         .from('clips')
-        .select('*, owner:users!clips_uploaded_by_fkey(id, username, display_name)', { count: 'exact' })
+        .select('*, owner:admin_accounts!clips_uploaded_by_fkey(id, display_name)', { count: 'exact' })
         .order(col, { ascending: asc })
         .order('id')
         .range(from, to);
 
-      if (!isSuper) q = q.eq('uploaded_by', req.user.id);
+      if (!isSuper) q = q.eq('uploaded_by', req.admin.id);
       else if (f.owner) q = q.eq('uploaded_by', f.owner);
       if (f.queue === 'approval') q = q.eq('status', 'pending').eq('is_configured', true);
       else if (f.status) q = q.eq('status', f.status);
@@ -66,5 +66,5 @@ export default createHandler(
       return { items: ((data ?? []) as ClipWithOwner[]).map(normaliseClip), page: f.page, page_size: f.page_size, total: count ?? 0 };
     },
   },
-  { auth: requireAdmin },
+  { adminAuth: requireAdminAccount },
 );

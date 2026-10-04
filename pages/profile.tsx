@@ -58,7 +58,7 @@ function PasswordForm() {
 }
 
 export default function ProfilePage() {
-  const { me, allowed } = useRequireAuth('user');
+  const { me, allowed } = useRequireAuth();
   const stats = useApi<{ user: PublicUser; stats: UserStats }>(allowed ? '/api/users/me' : null);
   const user = me?.user;
   const [form, setForm] = useState({ username: '', display_name: '', avatar_model: 'casual_m' as AvatarModel, avatar_color: '#ff2e6e', avatar_outfit: 'tee' as AvatarOutfit });

@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import type { ClipRow } from '@/types/database';
-import { badRequest, conflict, createHandler, parseBody, queryParam } from '@/lib/server/handler';
-import { requireAdmin } from '@/lib/middleware/requireAdmin';
+import { badRequest, conflict, createHandler, parseBody, queryParam, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 import { getManagedClip, hasLiveSessions, normaliseClip } from '@/lib/server/clips';
 import { thumbnailUrl, trimmedVideoUrl } from '@/lib/server/cloudinary';
 import { isFeatureEnabled } from '@/lib/server/featureFlags';
-import { notifySuperAdmins } from '@/lib/server/notify';
+import { emailSuperAdmins } from '@/lib/server/adminNotify';
+import { appUrl } from '@/lib/server/env';
 import { hexColorSchema } from '@/lib/server/validation';
 import { validateTimeline } from '@/lib/timeline';
 import { round2 } from '@/lib/utils';
@@ -36,10 +37,10 @@ const schema = z.object({
  * Save trim + characters + timeline mapping. Every section must be mapped (no grey sections).
  * With clip_approval_workflow ON the clip waits for super admin approval; OFF it goes live immediately.
  */
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     PUT: async (req): Promise<{ clip: ClipRow; requires_approval: boolean }> => {
-      const clip = normaliseClip(await getManagedClip(queryParam(req, 'id'), req.user));
+      const clip = normaliseClip(await getManagedClip(queryParam(req, 'id'), req.admin));
       const body = parseBody(schema, req);
       if (await hasLiveSessions(clip.id)) throw conflict('This clip is being played right now. Try again when the game ends.');
 
@@ -54,7 +55,7 @@ export default createHandler(
 
       const approvalOn = await isFeatureEnabled('clip_approval_workflow');
       // Super admins don't need to approve their own clips.
-      const requiresApproval = approvalOn && req.user.role !== 'super_admin';
+      const requiresApproval = approvalOn && req.admin.role !== 'super_admin';
       const trimmed = trimStart > 0 || trimEnd !== null;
 
       const { data, error } = await supabaseAdmin()
@@ -70,7 +71,7 @@ export default createHandler(
           is_configured: true,
           status: requiresApproval ? 'pending' : 'active',
           rejection_reason: null,
-          ...(requiresApproval ? { approved_by: null, approved_at: null } : { approved_by: req.user.id, approved_at: new Date().toISOString() }),
+          ...(requiresApproval ? { approved_by: null, approved_at: null } : { approved_by: req.admin.id, approved_at: new Date().toISOString() }),
         })
         .eq('id', clip.id)
         .select('*')
@@ -78,13 +79,13 @@ export default createHandler(
       if (error) throw error;
 
       if (requiresApproval) {
-        await notifySuperAdmins('clip_uploaded', `"${clip.title}" by @${req.user.username} is configured and awaiting approval.`, {
-          clip_id: clip.id,
-          sender_id: req.user.id,
-        });
+        await emailSuperAdmins(
+          `[Dubsmash] Clip awaiting approval: ${clip.title}`,
+          `"${clip.title}" by ${req.admin.display_name} is configured and awaiting approval.\n\nReview it: ${appUrl()}/admin/clips?queue=approval`,
+        );
       }
       return { clip: normaliseClip(data as ClipRow), requires_approval: requiresApproval };
     },
   },
-  { auth: requireAdmin },
+  { adminAuth: requireAdminAccount },
 );

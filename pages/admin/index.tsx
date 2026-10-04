@@ -1,15 +1,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { getAdminToken } from '@/lib/adminSession';
 import { FullPageSpinner } from '@/components/Common/ui';
 
-/** /admin -> dashboard, or the request-access screen when the user lacks admin access. */
+/** /admin -> dashboard when an admin session exists, otherwise the admin login. */
 export default function AdminIndex() {
   const router = useRouter();
-  const { me, status } = useRequireAuth('admin');
   useEffect(() => {
-    if (status !== 'ready' || !me) return;
-    void router.replace(me.admin_access.status === 'granted' ? '/admin/dashboard' : '/admin/request-access');
-  }, [me, status, router]);
+    if (router.isReady) void router.replace(getAdminToken() ? '/admin/dashboard' : '/admin/login');
+  }, [router, router.isReady]);
   return <FullPageSpinner />;
 }

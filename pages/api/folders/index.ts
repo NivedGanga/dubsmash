@@ -1,38 +1,38 @@
 import { z } from 'zod';
 import type { FolderRow } from '@/types/database';
 import type { FolderTreeResponse } from '@/types/api';
-import { badRequest, createHandler, forbidden, parseBody, parseQuery } from '@/lib/server/handler';
-import { requireAdmin } from '@/lib/middleware/requireAdmin';
+import { badRequest, createHandler, forbidden, parseBody, parseQuery, type AdminAuthedRequest } from '@/lib/server/handler';
+import { requireAdminAccount } from '@/lib/server/adminAuth';
 import { supabaseAdmin } from '@/lib/server/supabase';
 
 const listSchema = z.object({ owner: z.string().uuid().optional() });
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),
   parent_folder_id: z.string().uuid().nullable().optional(),
-  /** Super admin may create folders inside another user's space. */
+  /** Super admin may create folders inside another admin's space. */
   owner_id: z.string().uuid().optional(),
 });
 
-export default createHandler(
+export default createHandler<AdminAuthedRequest>(
   {
     /**
      * Folders of one owner (default: me). Super admins without `owner` additionally get the list of
-     * users who own content, rendered as top-level "username folders".
+     * admin accounts who can own content, rendered as top-level per-admin folders.
      */
     GET: async (req): Promise<FolderTreeResponse> => {
       const { owner } = parseQuery(listSchema, req);
-      const isSuper = req.user.role === 'super_admin';
-      if (owner && owner !== req.user.id && !isSuper) throw forbidden();
+      const isSuper = req.admin.role === 'super_admin';
+      if (owner && owner !== req.admin.id && !isSuper) throw forbidden();
       const sb = supabaseAdmin();
-      const { data, error } = await sb.from('folders').select('*').eq('owner_id', owner ?? req.user.id).order('name');
+      const { data, error } = await sb.from('folders').select('*').eq('owner_id', owner ?? req.admin.id).order('name');
       if (error) throw error;
       const result: FolderTreeResponse = { folders: (data ?? []) as FolderRow[] };
       if (isSuper && !owner) {
         const { data: owners, error: ownErr } = await sb
-          .from('users')
-          .select('id, username, display_name')
-          .or('clips_created.gt.0,role.in.(admin,super_admin)')
-          .order('username')
+          .from('admin_accounts')
+          .select('id, display_name')
+          .eq('status', 'active')
+          .order('display_name')
           .limit(500);
         if (ownErr) throw ownErr;
         result.owners = owners ?? [];
@@ -42,8 +42,8 @@ export default createHandler(
 
     POST: async (req, res): Promise<{ folder: FolderRow }> => {
       const body = parseBody(createSchema, req);
-      const ownerId = body.owner_id ?? req.user.id;
-      if (ownerId !== req.user.id && req.user.role !== 'super_admin') throw forbidden();
+      const ownerId = body.owner_id ?? req.admin.id;
+      if (ownerId !== req.admin.id && req.admin.role !== 'super_admin') throw forbidden();
       const sb = supabaseAdmin();
       if (body.parent_folder_id) {
         const { data: parent } = await sb.from('folders').select('owner_id').eq('id', body.parent_folder_id).maybeSingle();
@@ -59,5 +59,5 @@ export default createHandler(
       return { folder: data as FolderRow };
     },
   },
-  { auth: requireAdmin },
+  { adminAuth: requireAdminAccount },
 );
