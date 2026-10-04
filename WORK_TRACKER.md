@@ -65,6 +65,11 @@ _(Write here what is half-done in the current phase, so the next person can pick
 - Firebase `authorizedDomains` now includes `dubsmash.vercel.app` + both alias domains
   (was causing `auth/unauthorized-domain` on login). Preview-deployment URLs are each unique —
   add them via Identity Toolkit admin config PATCH if login is needed there.
+- **Deploy state:** commit `f5a5bb1` (separate portal auth) is live at dubsmash.vercel.app as
+  deployment `dpl_G1WTEGpYtmRfR4fi6Nj6H9YsW45c` with `ADMIN_SESSION_SECRET` set on all envs.
+  Pages verified live: `/admin/login`, `/admin/signup`, `/admin/pending`, `/admin`, `/login`,
+  `/signup`, `/game` all 200; `/api/admin/signup` validates correctly. Admin login/signup will
+  only succeed once migration 009 is applied to the live DB (below) — everything else works.
 - **Fully separate portal authentication (user request, supersedes the earlier portal-scoping
   approach):** the admin portal no longer uses Firebase/game accounts at all. `admin_accounts`
   (migration 009) holds its own credentials — email + bcrypt password (`bcryptjs`), role
@@ -223,9 +228,12 @@ _(Append-only. Each decision: what, why.)_
 
 _(Things intentionally left for later, or blocked on credentials. Mirrored in HANDOFF.md.)_
 
-- Migration 009 (admin_accounts) must be applied to the live DB before the admin portal works —
-  Supabase MCP was intermittently failing at commit time; apply `migrations/009_admin_accounts.sql`
-  via `apply_migration` once the connection recovers.
+- **Migration 009 (admin_accounts) is NOT yet applied to the live DB** — the Supabase MCP has been
+  refusing connections for an extended period. Until it runs, `/api/admin/signup` + `/api/admin/login`
+  will 500 (all other APIs work). Apply `migrations/009_admin_accounts.sql` via `apply_migration`
+  once the MCP recovers, **or** paste the file contents into the Supabase SQL editor
+  (Dashboard → SQL → New query → paste → Run). Verify afterwards with:
+  `select id, email, role, status from admin_accounts;` (empty table = applied, ready for first signup).
 - Next.js 14 has upstream advisories fixed only in 15+; upgrade recommended.
 - Realtime channels are public (hardening: Supabase third-party auth with Firebase + private channels).
 - No API rate limiting; no email-verification requirement; no i18n; no Sentry/analytics.
